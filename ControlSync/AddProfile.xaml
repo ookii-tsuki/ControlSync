@@ -1,0 +1,10 @@
+﻿<UserControl x:Class="ControlSync.AddProfile"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <TextBlock Text="Name" TextWrapping="Wrap" Height="25"/>
+        <TextBox x:Name="name"/>
+        <TextBlock x:Name="error" Text="Profile name cannot be empty" Visibility="Collapsed" TextWrapping="Wrap" Height="15" Foreground="Red"></TextBlock>
+    </StackPanel>
+</UserControl>
