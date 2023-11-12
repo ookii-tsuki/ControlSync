@@ -31,5 +31,18 @@ namespace Server
                 for (int i = 0; i < 6; i++)
                     Server.clients[_fromClient].player.analogInput[i] = _packet.ReadInt();
         }
+
+        public static void VideoBuffer(int _fromClient, Packet _packet)
+        {
+            if (!Server.clients.ContainsKey(_fromClient) || Server.clients[_fromClient].player == null)
+                return;
+
+            int originalSize = _packet.ReadInt();
+            int bufferLength = _packet.ReadInt();
+            byte[] buffer = _packet.ReadBytes(bufferLength);
+
+            Server.clients[_fromClient].player.videoBuffer = buffer;
+            Server.clients[_fromClient].player.originalsize = originalSize;
+        }
     }
 }

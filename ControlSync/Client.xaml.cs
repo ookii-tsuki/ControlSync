@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ControlSync.Client;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -77,7 +78,10 @@ namespace ControlSync
                 }
                 joinBtn.IsEnabled = false;
                 Client.Client.ConnectToServer(ipTB.Text, int.Parse(portTB.Text));
-                
+
+                ScreenView screenshare = new ScreenView();
+                screenshare.Hide();
+
             }
             else
             {

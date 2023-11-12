@@ -9,11 +9,15 @@ namespace ControlSync.Client
 {
     class ClientLogic
     {
+        public static void Start()
+        {
+            Manager.ShowScreen();
+        }
         public static void Update()
         {
             ControllerInput.SendInputToServer();
-            
-            ThreadManager.UpdateMain();
+            Screenshare.SendScreenBufferToServer();
+
         }
     }
 }

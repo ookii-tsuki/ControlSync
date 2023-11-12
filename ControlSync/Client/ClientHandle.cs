@@ -17,6 +17,8 @@ namespace ControlSync.Client
             ClientPg.Log(_msg);
 
             Client.udp.Connect(((IPEndPoint)Client.tcp.socket.Client.LocalEndPoint).Port);
+
+            ClientLogic.Start();
         }
 
         public static void ConnectPlayer(Packet _packet)
@@ -56,6 +58,19 @@ namespace ControlSync.Client
                 }
             }
 
+        }
+
+        public static void VideoBuffer(Packet _packet)
+        {
+            if (Client.isHost)
+                return;
+
+            int _id = _packet.ReadInt();
+            int originalSize = _packet.ReadInt();
+            int compressedSize = _packet.ReadInt();
+            byte[] buffer = _packet.ReadBytes(compressedSize);
+
+            Manager.UpdateScreenView(buffer, originalSize);
         }
     }
 }

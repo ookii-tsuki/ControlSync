@@ -44,7 +44,12 @@ namespace ControlSync
             {
                 while (_nextLoop < DateTime.Now)
                 {
-                    ClientLogic.Update();
+                    if (Client.Client.isConnected)
+                    {
+                        ClientLogic.Update();
+                    }
+
+                    ThreadManager.UpdateMain();
 
                     _nextLoop = _nextLoop.AddMilliseconds(Constants.MS_PER_TICK);
 

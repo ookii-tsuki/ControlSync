@@ -102,16 +102,29 @@ namespace Server
         }
         public static void AnalogState(Player _player)
         {
-            using (Packet _packet = new Packet((int)ServerPackets.AnalogState))
-            {
-                _packet.Write(_player.id);
-                for (int i = 0; i < _player.analogInput.Length; i++)
-                    _packet.Write(_player.analogInput[i]);
+            using Packet _packet = new Packet((int)ServerPackets.AnalogState);
+            
+            _packet.Write(_player.id);
+            for (int i = 0; i < _player.analogInput.Length; i++)
+                _packet.Write(_player.analogInput[i]);
 
-                SendTCPDataToAll(_packet); // was UDP
-            }
+            SendTCPDataToAll(_packet); // was UDP
+            
         }
-
+        public static void VideoBuffer(Player _player)
+        {
+            if (_player.id != 1 || _player.videoBuffer == null)
+                return;
+            using Packet _packet = new Packet((int)ServerPackets.VideoBuffer);
+            
+            _packet.Write(_player.id);
+            _packet.Write(_player.originalsize);
+            _packet.Write(_player.videoBuffer.Length);
+            _packet.Write(_player.videoBuffer);
+            
+            // starting from 2 to not sent the buffer to the host client
+            SendUDPDataToAll(1, _packet);
+        }
         #endregion
     }
 }

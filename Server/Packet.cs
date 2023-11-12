@@ -12,7 +12,8 @@ namespace Server
         ConnectPlayer,
         DisconnectPlayer,
         ButtonState,
-        AnalogState
+        AnalogState,
+        VideoBuffer
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -20,7 +21,8 @@ namespace Server
     {
         WelcomeReceived = 1,
         ButtonState,
-        AnalogState
+        AnalogState,
+        VideoBuffer
     }
 
     public class Packet : IDisposable

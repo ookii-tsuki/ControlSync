@@ -12,6 +12,8 @@ namespace Server
 
         public int buttonState;
         public int[] analogInput = new int[6];
+        public byte[] videoBuffer;
+        public int originalsize;
 
         public Player(int _id, string _username)
         {
@@ -23,6 +25,7 @@ namespace Server
         {
             ServerSend.ButtonState(this);
             ServerSend.AnalogState(this);
+            ServerSend.VideoBuffer(this);
         }
 
     }

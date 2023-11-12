@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System;
+using System.Diagnostics;
 
 namespace ControlSync.Client
 {
@@ -17,6 +18,7 @@ namespace ControlSync.Client
         public static TCP tcp;
         public static UDP udp;
         public static bool isConnected = false;
+        public static bool isHost => myId == 1;
 
         public static Event onFailConnect;
         public static Event onDisconnect;
@@ -291,7 +293,8 @@ namespace ControlSync.Client
                 { (int)ServerPackets.ConnectPlayer, ClientHandle.ConnectPlayer },
                 { (int)ServerPackets.DisconnectPlayer, ClientHandle.DisconnectPlayer },
                 { (int)ServerPackets.ButtonState, ClientHandle.ButtonState },
-                { (int)ServerPackets.AnalogState, ClientHandle.AnalogState }
+                { (int)ServerPackets.AnalogState, ClientHandle.AnalogState },
+                { (int)ServerPackets.VideoBuffer, ClientHandle.VideoBuffer}
             };
         }
 

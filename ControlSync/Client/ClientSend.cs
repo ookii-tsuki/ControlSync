@@ -21,33 +21,44 @@ namespace ControlSync.Client
         #region Packets
         public static void WelcomeReceived()
         {
-            using (Packet _packet = new Packet((int)ClientPackets.WelcomeReceived))
-            {
-                _packet.Write(Client.myId);
-                ClientPg.instance.Dispatcher.Invoke(() => _packet.Write(ClientPg.instance.uidTB.Text));
+            using Packet _packet = new Packet((int)ClientPackets.WelcomeReceived);
 
-                SendTCPData(_packet);
-            }
+            _packet.Write(Client.myId);
+            ClientPg.instance.Dispatcher.Invoke(() => _packet.Write(ClientPg.instance.uidTB.Text));
+
+            SendTCPData(_packet);
+            
         }
 
         public static void ButtonState(int xButtons)
         {
-            using (Packet _packet = new Packet((int)ClientPackets.ButtonState))
-            {
-                _packet.Write(xButtons);               
-                SendUDPData(_packet);
-            }
+            using Packet _packet = new Packet((int)ClientPackets.ButtonState);
+
+            _packet.Write(xButtons);               
+            SendTCPData(_packet);
+            
         }
         public static void AnalogState(int[] inputs)
         {
-            using (Packet _packet = new Packet((int)ClientPackets.AnalogState))
+            using Packet _packet = new Packet((int)ClientPackets.AnalogState);
+
+            foreach (var item in inputs)
             {
-                foreach (var item in inputs)
-                {
-                    _packet.Write(item);
-                }
-                SendUDPData(_packet);
+                _packet.Write(item);
             }
+            SendTCPData(_packet);
+        }
+
+        public static void VideoBuffer(byte[] buffer, int originalSize)
+        {
+            using Packet _packet = new Packet((int)ClientPackets.VideoBuffer);
+
+            _packet.Write(originalSize);
+            _packet.Write(buffer.Length);
+            _packet.Write(buffer);
+
+            SendUDPData(_packet);
+
         }
         #endregion
     }

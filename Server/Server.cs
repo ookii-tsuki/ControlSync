@@ -127,6 +127,7 @@ namespace Server
                 { (int)ClientPackets.WelcomeReceived, ServerHandle.WelcomeReceived },
                 { (int)ClientPackets.ButtonState, ServerHandle.ButtonState },
                 { (int)ClientPackets.AnalogState, ServerHandle.AnalogState },
+                { (int)ClientPackets.VideoBuffer, ServerHandle.VideoBuffer }
             };
             Console.WriteLine("Initialized packets.");
         }

@@ -11,7 +11,8 @@ namespace ControlSync.Client
         ConnectPlayer,
         DisconnectPlayer,
         ButtonState,
-        AnalogState
+        AnalogState,
+        VideoBuffer
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -19,7 +20,8 @@ namespace ControlSync.Client
     {
         WelcomeReceived = 1,
         ButtonState,
-        AnalogState
+        AnalogState,
+        VideoBuffer
     }
 
     public class Packet : IDisposable

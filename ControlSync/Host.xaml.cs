@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ControlSync.Client;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -30,6 +31,7 @@ namespace ControlSync
         public Host()
         {
             InitializeComponent();
+
             hostPg.Background = null;
             if (instance != null)
             {
