@@ -85,7 +85,10 @@ namespace ControlSync
             }
             else
             {
-                Client.Client.Disconnect();                
+                if (Client.Client.isHost)
+                    HostPeer.CloseConnection();
+                else
+                    Client.Client.Disconnect();
             }
         }
         public static void Log(string message)

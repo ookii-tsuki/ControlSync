@@ -111,19 +111,48 @@ namespace Server
             SendTCPDataToAll(_packet); // was UDP
             
         }
-        public static void VideoBuffer(Player _player)
+        public static void PeerOffer(Player _player, int toId)
         {
-            if (_player.id != 1 || _player.videoBuffer == null)
+            using Packet _packet = new Packet((int)ServerPackets.PeerOffer);
+
+            _packet.Write(_player.base64Offer);
+
+            Console.WriteLine("sending offer to player " +  toId);
+            
+            SendTCPData(toId, _packet);
+        }
+
+        public static void PeerAnswer(string base64Answer)
+        {
+            if (!Server.clients.ContainsKey(1))
                 return;
-            using Packet _packet = new Packet((int)ServerPackets.VideoBuffer);
-            
-            _packet.Write(_player.id);
-            _packet.Write(_player.originalsize);
-            _packet.Write(_player.videoBuffer.Length);
-            _packet.Write(_player.videoBuffer);
-            
-            // starting from 2 to not sent the buffer to the host client
-            SendUDPDataToAll(1, _packet);
+
+            using Packet _packet = new Packet((int)ServerPackets.PeerAnswer);
+
+            _packet.Write(base64Answer);
+
+            SendTCPData(1, _packet);
+        }
+
+        public static void ICECandidate(string base64ICECandidate, int toId)
+        {
+            if (!Server.clients.ContainsKey(toId))
+                return;
+
+            using Packet _packet = new Packet((int)ServerPackets.ICECandidate);
+
+            _packet.Write(base64ICECandidate);
+
+            SendTCPData(toId, _packet);
+        }
+
+        public static void ClosePeerConnection()
+        {
+            using Packet _packet = new Packet((int)ServerPackets.ClosePeerConnection);
+
+            Console.WriteLine("Peer connection is closed by the host");
+
+            SendTCPDataToAll(1, _packet);
         }
         #endregion
     }

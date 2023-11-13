@@ -49,16 +49,42 @@ namespace ControlSync.Client
             SendTCPData(_packet);
         }
 
-        public static void VideoBuffer(byte[] buffer, int originalSize)
+        public static void PeerOffer(string base64Offer)
         {
-            using Packet _packet = new Packet((int)ClientPackets.VideoBuffer);
+            using Packet _packet = new Packet((int)ClientPackets.PeerOffer);
 
-            _packet.Write(originalSize);
-            _packet.Write(buffer.Length);
-            _packet.Write(buffer);
+            _packet.Write(base64Offer);
 
-            SendUDPData(_packet);
+            SendTCPData(_packet);
 
+        }
+
+        public static void PeerAnswer(string base64Answer)
+        {
+            using Packet _packet = new Packet((int)ClientPackets.PeerAnswer);
+
+            _packet.Write(base64Answer);
+
+            SendTCPData(_packet);
+
+        }
+
+        public static void ICECandidate(string base64ICECandidate, int toId)
+        {
+            using Packet _packet = new Packet((int)ClientPackets.ICECandidate);
+
+            _packet.Write(toId);
+            _packet.Write(base64ICECandidate);
+
+            SendTCPData(_packet);
+
+        }
+
+        public static void ClosePeerConnection()
+        {
+            using Packet _packet = new Packet((int)ClientPackets.ClosePeerConnection);
+
+            SendTCPData(_packet);
         }
         #endregion
     }

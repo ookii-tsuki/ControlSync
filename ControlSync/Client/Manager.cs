@@ -4,6 +4,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using LZ4;
 using System.Diagnostics;
+using System.Windows;
 
 namespace ControlSync.Client
 {
@@ -42,16 +43,20 @@ namespace ControlSync.Client
                 ScreenView.instance.Dispatcher.Invoke(ScreenView.instance.Show);
             }
         }
-        public static void UpdateScreenView(byte[] buffer, int originalSize)
+        public static void CloseScreen()
         {
-            var uncompressedBuffer = LZ4Codec.Decode(buffer, 0, buffer.Length, originalSize);
+            ScreenView.instance.Dispatcher.Invoke(ScreenView.instance.Hide);
+        }
+        public static void UpdateScreenView(byte[] buffer, int width, int height, int stride)
+        {
+            //var uncompressedBuffer = LZ4Codec.Decode(buffer, 0, buffer.Length, originalSize);
 
             if (ScreenView.instance == null)
                 return;
-            Debug.WriteLine(uncompressedBuffer.Length);
+            //Debug.WriteLine(uncompressedBuffer.Length);
             ScreenView.instance.Dispatcher.Invoke(() =>
             {
-                ScreenView.instance.viewer.Source = LoadImage(uncompressedBuffer);
+                ScreenView.instance.viewer.Source = LoadImage(buffer, width, height, stride);
             });
         }
         private static void UpdateList()
@@ -63,9 +68,9 @@ namespace ControlSync.Client
         }
 
 
-        private static BitmapSource LoadImage(byte[] imageData)
+        private static BitmapSource LoadImage(byte[] imageData, int width, int height, int stride)
         {
-            return BitmapSource.Create(1920 / 2, 1080 / 2, 300, 300, PixelFormats.Rgb24, null, imageData, (1920 / 2) * 3);
+            return BitmapSource.Create(width, height, 300, 300, PixelFormats.Rgb24, null, imageData, stride);
         }
     }
 }

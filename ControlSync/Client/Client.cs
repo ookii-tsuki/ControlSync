@@ -92,7 +92,14 @@ namespace ControlSync.Client
                 {
                     if (socket != null)
                     {
-                        stream.BeginWrite(_packet.ToArray(), 0, _packet.Length(), null, null);
+                        int packetId = _packet.Id;
+                        stream.BeginWrite(_packet.ToArray(), 0, _packet.Length(), (IAsyncResult ar) =>
+                        {
+                            if (packetId == (int)ClientPackets.ClosePeerConnection)
+                                Disconnect(); 
+                            // if this is the host peer we must wait for it to tell the other clients
+                            // to close connections before disconnecting
+                        }, null);
                     }
                 }
                 catch (Exception _ex)
@@ -294,7 +301,10 @@ namespace ControlSync.Client
                 { (int)ServerPackets.DisconnectPlayer, ClientHandle.DisconnectPlayer },
                 { (int)ServerPackets.ButtonState, ClientHandle.ButtonState },
                 { (int)ServerPackets.AnalogState, ClientHandle.AnalogState },
-                { (int)ServerPackets.VideoBuffer, ClientHandle.VideoBuffer}
+                { (int)ServerPackets.PeerOffer, ClientHandle.PeerOffer},
+                { (int)ServerPackets.PeerAnswer, ClientHandle.PeerAnswer},
+                { (int)ServerPackets.ICECandidate, ClientHandle.ICECandidate},
+                { (int)ServerPackets.ClosePeerConnection, ClientHandle.ClosePeerConnection}
             };
         }
 
@@ -306,6 +316,7 @@ namespace ControlSync.Client
                 {
                     isConnected = false;
                     Manager.DisconnectAll();
+                    Manager.CloseScreen();
                     tcp.socket.Close();
                     udp.socket.Close();
                     ClientPg.Log("Disconnected from server.");

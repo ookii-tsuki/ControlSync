@@ -18,6 +18,9 @@ namespace Server
                 Console.WriteLine($"Player \"{_username}\" (ID: {_fromClient}) has assumed the wrong client ID ({_clientIdCheck})!");
             }
             Server.clients[_fromClient].SendIntoGame(_username);
+
+            if (_fromClient != 1)
+                Server.clients[1].player.SendOffer(_fromClient);
         }
 
         public static void ButtonState(int _fromClient, Packet _packet)
@@ -32,17 +35,45 @@ namespace Server
                     Server.clients[_fromClient].player.analogInput[i] = _packet.ReadInt();
         }
 
-        public static void VideoBuffer(int _fromClient, Packet _packet)
+        public static void PeerOffer(int _fromClient, Packet _packet)
         {
             if (!Server.clients.ContainsKey(_fromClient) || Server.clients[_fromClient].player == null)
                 return;
 
-            int originalSize = _packet.ReadInt();
-            int bufferLength = _packet.ReadInt();
-            byte[] buffer = _packet.ReadBytes(bufferLength);
+            string base64Offer = _packet.ReadString();
+            Player player = Server.clients[_fromClient].player;
+            player.base64Offer = base64Offer;
+            for (int i = 1; i <= Server.clients.Count; i++)
+            {
+                if (i == _fromClient) continue;
+                if (!Server.clients.ContainsKey(i) || Server.clients[i].player == null) continue;
 
-            Server.clients[_fromClient].player.videoBuffer = buffer;
-            Server.clients[_fromClient].player.originalsize = originalSize;
+                ServerSend.PeerOffer(player, i);
+            }
+        }
+
+        public static void PeerAnswer(int _fromClient, Packet _packet)
+        {
+            if (!Server.clients.ContainsKey(_fromClient) || Server.clients[_fromClient].player == null)
+                return;
+
+            string base64Answer = _packet.ReadString();
+            Server.clients[_fromClient].player.SendAnswer(base64Answer);
+        }
+
+        public static void ICECandidate(int _fromClient, Packet _packet)
+        {
+            if (!Server.clients.ContainsKey(_fromClient) || Server.clients[_fromClient].player == null)
+                return;
+
+            int toId = _packet.ReadInt();
+            string base64ICECandidate = _packet.ReadString();
+            Server.clients[_fromClient].player.SendICECandidate(base64ICECandidate, toId);
+        }
+
+        public static void ClosePeerConnection(int _fromClient, Packet _packet)
+        {
+            ServerSend.ClosePeerConnection();
         }
     }
 }

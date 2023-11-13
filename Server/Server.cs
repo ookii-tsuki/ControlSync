@@ -127,7 +127,10 @@ namespace Server
                 { (int)ClientPackets.WelcomeReceived, ServerHandle.WelcomeReceived },
                 { (int)ClientPackets.ButtonState, ServerHandle.ButtonState },
                 { (int)ClientPackets.AnalogState, ServerHandle.AnalogState },
-                { (int)ClientPackets.VideoBuffer, ServerHandle.VideoBuffer }
+                { (int)ClientPackets.PeerOffer, ServerHandle.PeerOffer },
+                { (int)ClientPackets.PeerAnswer, ServerHandle.PeerAnswer },
+                { (int)ClientPackets.ICECandidate, ServerHandle.ICECandidate },
+                { (int)ClientPackets.ClosePeerConnection, ServerHandle.ClosePeerConnection }
             };
             Console.WriteLine("Initialized packets.");
         }

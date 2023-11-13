@@ -12,8 +12,7 @@ namespace Server
 
         public int buttonState;
         public int[] analogInput = new int[6];
-        public byte[] videoBuffer;
-        public int originalsize;
+        public string base64Offer;
 
         public Player(int _id, string _username)
         {
@@ -25,8 +24,21 @@ namespace Server
         {
             ServerSend.ButtonState(this);
             ServerSend.AnalogState(this);
-            ServerSend.VideoBuffer(this);
         }
 
+        public void SendOffer(int toId)
+        {
+            ServerSend.PeerOffer(this, toId);
+        }
+
+        public void SendAnswer(string base64Answer)
+        {
+            ServerSend.PeerAnswer(base64Answer);
+        }
+
+        public void SendICECandidate(string base64ICECandidate, int toId)
+        {
+            ServerSend.ICECandidate(base64ICECandidate, toId);
+        }
     }
 }

@@ -13,7 +13,10 @@ namespace Server
         DisconnectPlayer,
         ButtonState,
         AnalogState,
-        VideoBuffer
+        PeerOffer,
+        PeerAnswer,
+        ICECandidate,
+        ClosePeerConnection
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -22,7 +25,10 @@ namespace Server
         WelcomeReceived = 1,
         ButtonState,
         AnalogState,
-        VideoBuffer
+        PeerOffer,
+        PeerAnswer,
+        ICECandidate,
+        ClosePeerConnection
     }
 
     public class Packet : IDisposable

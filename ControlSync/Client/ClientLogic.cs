@@ -11,7 +11,8 @@ namespace ControlSync.Client
     {
         public static void Start()
         {
-            Manager.ShowScreen();
+            if (Client.isHost)
+                HostPeer.StartPeerConnection();
         }
         public static void Update()
         {

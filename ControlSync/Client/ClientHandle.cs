@@ -60,17 +60,45 @@ namespace ControlSync.Client
 
         }
 
-        public static void VideoBuffer(Packet _packet)
+        public static void PeerOffer(Packet _packet)
         {
-            if (Client.isHost)
+            if (Client.isHost) // this offer is meant for clients who will watch the stream
                 return;
 
-            int _id = _packet.ReadInt();
-            int originalSize = _packet.ReadInt();
-            int compressedSize = _packet.ReadInt();
-            byte[] buffer = _packet.ReadBytes(compressedSize);
+            string base64Offer = _packet.ReadString();
 
-            Manager.UpdateScreenView(buffer, originalSize);
+            ClientPg.Log("received offer");
+
+            ClientPeer.StartPeerConnection(base64Offer);
+        }
+
+        public static void PeerAnswer(Packet _packet)
+        {
+            if (!Client.isHost) // this answer for the host who hosts the stream
+                return;
+
+            string base64Answer = _packet.ReadString();
+
+            HostPeer.HandleAnswer(base64Answer);
+        }
+
+        public static void ICECandidate(Packet _packet)
+        {
+            string base64ICECandidate = _packet.ReadString();
+
+            if (Client.isHost)
+                HostPeer.AddICECandidate(base64ICECandidate);
+            else
+                ClientPeer.AddICECandidate(base64ICECandidate);
+        }
+
+        public static void ClosePeerConnection(Packet _packet)
+        {
+            if (Client.isHost) // this answer for the host who hosts the stream
+                return;
+
+            ClientPeer.CloseConnection();
+            Manager.CloseScreen();
         }
     }
 }

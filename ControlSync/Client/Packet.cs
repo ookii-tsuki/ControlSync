@@ -12,7 +12,10 @@ namespace ControlSync.Client
         DisconnectPlayer,
         ButtonState,
         AnalogState,
-        VideoBuffer
+        PeerOffer,
+        PeerAnswer,
+        ICECandidate,
+        ClosePeerConnection
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -21,11 +24,15 @@ namespace ControlSync.Client
         WelcomeReceived = 1,
         ButtonState,
         AnalogState,
-        VideoBuffer
+        PeerOffer,
+        PeerAnswer,
+        ICECandidate,
+        ClosePeerConnection
     }
 
     public class Packet : IDisposable
     {
+        public int Id { get; private set; }
         private List<byte> buffer;
         private byte[] readableBuffer;
         private int readPos;
@@ -44,6 +51,7 @@ namespace ControlSync.Client
             buffer = new List<byte>(); // Initialize buffer
             readPos = 0; // Set readPos to 0
 
+            Id = _id;
             Write(_id); // Write packet id to the buffer
         }
 
