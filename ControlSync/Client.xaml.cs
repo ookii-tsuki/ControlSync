@@ -43,7 +43,7 @@ namespace ControlSync
                 joinBtn.Content = "Connect to server";
             DataContext = this;
 
-            onConnect = () => instance.Dispatcher.Invoke(() => { joinBtn.Content = "Disconnect from server"; joinBtn.IsEnabled = true; });
+            onConnect = () => instance.Dispatcher.Invoke(() => { joinBtn.Content = "Disconnect from server"; joinBtn.IsEnabled = true; showScreen.Visibility = Visibility.Hidden; });
             onDisconnect = () => instance.Dispatcher.Invoke(() => { joinBtn.Content = "Connect to server"; joinBtn.IsEnabled = true; });
 
             Client.Client.onConnect += onConnect;
@@ -54,6 +54,11 @@ namespace ControlSync
         {
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
+        }
+
+        private void ShowScreen_Click(object sender, RoutedEventArgs e)
+        {
+            Manager.ShowScreen();
         }
 
         private void joinBtn_Click(object sender, RoutedEventArgs e)

@@ -88,7 +88,12 @@ namespace ControlSync
         {
             if(Host.process != null)
                 Host.process.Kill();
-            Client.Client.Disconnect();
+
+            if (Client.Client.isHost)
+                HostPeer.CloseConnection();
+            else
+                Client.Client.Disconnect();
+
             Process.GetCurrentProcess().Kill();
         }
     }

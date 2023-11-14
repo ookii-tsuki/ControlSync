@@ -41,11 +41,19 @@ namespace ControlSync.Client
             if (!Client.isHost)
             {
                 ScreenView.instance.Dispatcher.Invoke(ScreenView.instance.Show);
+                ClientPg.instance.Dispatcher.Invoke(() => { ClientPg.instance.showScreen.Visibility = Visibility.Hidden; });
             }
         }
         public static void CloseScreen()
         {
             ScreenView.instance.Dispatcher.Invoke(ScreenView.instance.Hide);
+            if (!Client.isHost)
+            {
+                if (ClientPeer.ConnectionState == SIPSorcery.Net.RTCPeerConnectionState.connected)
+                    ClientPg.instance.Dispatcher.Invoke(() => { ClientPg.instance.showScreen.Visibility = Visibility.Visible; });
+                else
+                    ClientPg.instance.Dispatcher.Invoke(() => { ClientPg.instance.showScreen.Visibility = Visibility.Hidden; });
+            }
         }
         public static void UpdateScreenView(byte[] buffer, int width, int height, int stride)
         {

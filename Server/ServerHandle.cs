@@ -20,7 +20,12 @@ namespace Server
             Server.clients[_fromClient].SendIntoGame(_username);
 
             if (_fromClient != 1)
-                Server.clients[1].player.SendOffer(_fromClient);
+            {
+                Player hostPlayer = Server.clients[1].player;
+
+                hostPlayer.SendAllICECandidates(_fromClient);
+                hostPlayer.SendOffer(_fromClient);
+            }
         }
 
         public static void ButtonState(int _fromClient, Packet _packet)
@@ -68,7 +73,10 @@ namespace Server
 
             int toId = _packet.ReadInt();
             string base64ICECandidate = _packet.ReadString();
-            Server.clients[_fromClient].player.SendICECandidate(base64ICECandidate, toId);
+            Player player = Server.clients[_fromClient].player;
+
+            player.iceCandidates.Add(base64ICECandidate);
+            player.SendICECandidate(base64ICECandidate, toId);
         }
 
         public static void ClosePeerConnection(int _fromClient, Packet _packet)

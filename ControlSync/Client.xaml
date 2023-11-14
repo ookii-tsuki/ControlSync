@@ -3,7 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:ControlSync"
+      xmlns:local="clr-namespace:ControlSync" xmlns:ui="http://schemas.modernwpf.com/2019"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="Client" Background="White" Width="902">
@@ -14,7 +14,14 @@
             <ColumnDefinition Width="713*"/>
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="header" Text="Join a server" Style="{StaticResource HeaderTextBlockStyle}" Grid.ColumnSpan="2" Margin="10,0,0,373" />
-        <Button x:Name="joinBtn" Content="Connect to server" Style="{StaticResource AccentButtonStyle}" Margin="8,289,0,0" Height="30" VerticalAlignment="Top" Grid.ColumnSpan="2" Click="joinBtn_Click"/>
+        <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal">
+            <Button x:Name="joinBtn" Content="Connect to server" Style="{StaticResource AccentButtonStyle}" Margin="8,289,0,0" Height="30" VerticalAlignment="Top" Grid.Column="1" Click="joinBtn_Click"/>
+            <Button x:Name="showScreen" Visibility="Hidden" Width="37" Height="30" IsCancel="True" FontSize="13" Click="ShowScreen_Click" Margin="5,289,0,0" VerticalAlignment="Top">
+                <Viewbox Height="15" Width="21">
+                    <ui:PathIcon Foreground="White" Data="M155.676 1349.19v337.3c0 42.99 34.849 77.83 77.838 77.83h337.297V1920H233.514C104.548 1920 0 1815.45 0 1686.49v-337.3h155.676Zm1764.324 0v337.3c0 128.96-104.55 233.51-233.51 233.51h-337.3v-155.68h337.3c42.99 0 77.83-34.84 77.83-77.83v-337.3H1920ZM960 544.865c229.27 0 415.14 185.862 415.14 415.135 0 229.27-185.87 415.14-415.14 415.14-229.273 0-415.135-185.87-415.135-415.14 0-229.273 185.862-415.135 415.135-415.135ZM1686.49 0C1815.45 0 1920 104.548 1920 233.514v337.297h-155.68V233.514c0-42.989-34.84-77.838-77.83-77.838h-337.3V0ZM570.811 0v155.676H233.514c-42.989 0-77.838 34.849-77.838 77.838v337.297H0V233.514C0 104.548 104.548 0 233.514 0h337.297Z"/>
+                </Viewbox>
+            </Button>
+        </StackPanel>
         <TextBox x:Name="portTB" Height="32" TextWrapping="Wrap" Width="238" Margin="8,106,0,308" Text="9600" HorizontalAlignment="Left" Grid.ColumnSpan="2" PreviewTextInput="CheckPortValidation">
             <UIElement.RenderTransform>
                 <MatrixTransform/>

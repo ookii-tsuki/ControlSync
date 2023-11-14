@@ -21,6 +21,7 @@ using SharpDX.WIC;
 using SharpDX.Direct2D1;
 using SharpDX.IO;
 using Factory1 = SharpDX.DXGI.Factory1;
+using SIPSorceryMedia.Abstractions;
 
 namespace ControlSync.Client
 {
@@ -114,7 +115,7 @@ namespace ControlSync.Client
             if (!initilized)
                 Init();
 
-            if (HostPeer.VideoEncoderEndPoint == null)
+            if (HostPeer.VideoEncoder == null)
                 return;
 
             var bitmap = GetScreenShot();
@@ -133,7 +134,11 @@ namespace ControlSync.Client
 
             bitmap.Dispose();
 
-            HostPeer.VideoEncoderEndPoint.ExternalVideoSourceRawSample(1, width, height, rgbBuffer, SIPSorceryMedia.Abstractions.VideoPixelFormatsEnum.Rgb);
+            try
+            {
+                HostPeer.VideoEncoder?.ExternalVideoSourceRawSample(30, width, height, rgbBuffer, VideoPixelFormatsEnum.Rgb);
+            }
+            catch { }
         }
 
         private static System.Drawing.Bitmap GetScreenShot()

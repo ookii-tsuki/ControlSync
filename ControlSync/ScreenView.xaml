@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ControlSync"
         mc:Ignorable="d"
-        Title="ScreenView" Height="450" Width="800" Background="Black" WindowState="Maximized">
+        Title="ScreenView" Height="450" Width="800" Background="Black" WindowState="Maximized" WindowStyle="None" Closing="Window_Closing" KeyDown="Window_KeyDown">
     <Grid>
         <Image x:Name="viewer" />
 

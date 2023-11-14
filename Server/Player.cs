@@ -13,6 +13,7 @@ namespace Server
         public int buttonState;
         public int[] analogInput = new int[6];
         public string base64Offer;
+        public List<string> iceCandidates = new List<string>();
 
         public Player(int _id, string _username)
         {
@@ -39,6 +40,13 @@ namespace Server
         public void SendICECandidate(string base64ICECandidate, int toId)
         {
             ServerSend.ICECandidate(base64ICECandidate, toId);
+        }
+        public void SendAllICECandidates(int toId)
+        {
+            foreach (var iceCandidate in iceCandidates)
+            {
+                ServerSend.ICECandidate(iceCandidate, toId);
+            }
         }
     }
 }

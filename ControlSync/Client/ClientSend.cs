@@ -35,7 +35,7 @@ namespace ControlSync.Client
             using Packet _packet = new Packet((int)ClientPackets.ButtonState);
 
             _packet.Write(xButtons);               
-            SendTCPData(_packet);
+            SendUDPData(_packet);
             
         }
         public static void AnalogState(int[] inputs)
@@ -46,7 +46,7 @@ namespace ControlSync.Client
             {
                 _packet.Write(item);
             }
-            SendTCPData(_packet);
+            SendUDPData(_packet);
         }
 
         public static void PeerOffer(string base64Offer)

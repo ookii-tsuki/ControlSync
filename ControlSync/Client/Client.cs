@@ -317,6 +317,8 @@ namespace ControlSync.Client
                     isConnected = false;
                     Manager.DisconnectAll();
                     Manager.CloseScreen();
+                    if (!isHost)
+                        ClientPeer.CloseConnection();
                     tcp.socket.Close();
                     udp.socket.Close();
                     ClientPg.Log("Disconnected from server.");

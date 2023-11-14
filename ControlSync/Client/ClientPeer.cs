@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SIPSorceryMedia.Encoders;
+using SIPSorceryMedia.FFmpeg;
+using System.Diagnostics;
 
 namespace ControlSync.Client
 {
@@ -12,15 +15,21 @@ namespace ControlSync.Client
     {
         private const string STUN_URL1 = "stun:stun.l.google.com:19302";
         private const string STUN_URL2 = "stun:stun1.l.google.com:19302";
+        private const string FFMPEG_PATH = @"C:\Program Files (x86)\Ffmpeg\bin";
 
+        public static RTCPeerConnectionState ConnectionState => pc != null ? pc.connectionState : RTCPeerConnectionState.disconnected;
 
         private static RTCPeerConnection pc;
-        private static SIPSorceryMedia.Encoders.VideoEncoderEndPoint VideoEncoderEndPoint { get; set; }
+        private static FFmpegVideoEndPoint VideoEncoder { get; set; }
 
 
         public static async void StartPeerConnection(string base64Offer)
         {
-            VideoEncoderEndPoint = new SIPSorceryMedia.Encoders.VideoEncoderEndPoint();
+
+            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_VERBOSE, FFMPEG_PATH);
+
+            VideoEncoder = new FFmpegVideoEndPoint();
+
             pc = CreatePeerConnection();
 
             HandleOffer(base64Offer);
@@ -66,6 +75,8 @@ namespace ControlSync.Client
 
             pc.close();
             pc = null;
+            VideoEncoder.Dispose();
+            VideoEncoder = null;
         }
         private static RTCPeerConnection CreatePeerConnection()
         {
@@ -76,18 +87,19 @@ namespace ControlSync.Client
             // Create a new peer connection.
             var pc = new RTCPeerConnection(config);
 
+            //VideoEncoder.RestrictFormats(format => format.Codec == VideoCodecsEnum.H264);
 
-            var videoTrack = new MediaStreamTrack(VideoEncoderEndPoint.GetVideoSourceFormats(), MediaStreamStatusEnum.RecvOnly);
+            var videoTrack = new MediaStreamTrack(VideoEncoder.GetVideoSourceFormats(), MediaStreamStatusEnum.RecvOnly);
 
             pc.addTrack(videoTrack);
 
-            pc.OnVideoFormatsNegotiated += (sdpFormat) => VideoEncoderEndPoint.SetVideoSourceFormat(sdpFormat.First());
+            pc.OnVideoFormatsNegotiated += (sdpFormat) => VideoEncoder.SetVideoSourceFormat(sdpFormat.First());
 
-            pc.OnVideoFrameReceived += VideoEncoderEndPoint.GotVideoFrame;
+            pc.OnVideoFrameReceived += VideoEncoder.GotVideoFrame;
 
-            VideoEncoderEndPoint.OnVideoSinkDecodedSample += (byte[] bmp, uint width, uint height, int stride, VideoPixelFormatsEnum pixelFormat) =>
+            VideoEncoder.OnVideoSinkDecodedSampleFaster += (RawImage img) =>
             {
-                Manager.UpdateScreenView(bmp, (int)width, (int)height, stride);
+                Manager.UpdateScreenView(img.GetBuffer(), img.Width, img.Height, img.Stride);
             };
 
             // Add a handler for ICE candidate events.
@@ -97,11 +109,8 @@ namespace ControlSync.Client
                 var jCandidate = candidate.toJSON();
                 var base64ICECandidate = Convert.ToBase64String(Encoding.UTF8.GetBytes(jCandidate));
 
-                for (int i = 2; i <= Manager.players.Count; i++)
-                {
-                    var player = Manager.players[i];
-                    ClientSend.ICECandidate(base64ICECandidate, player.Id);
-                }
+                ClientSend.ICECandidate(base64ICECandidate, 1);
+                
             };
 
 

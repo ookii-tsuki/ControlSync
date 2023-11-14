@@ -8,6 +8,8 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
+using SIPSorceryMedia.Encoders;
+using SIPSorceryMedia.FFmpeg;
 
 namespace ControlSync.Client
 {
@@ -15,15 +17,21 @@ namespace ControlSync.Client
     {
         private const string STUN_URL1 = "stun:stun.l.google.com:19302";
         private const string STUN_URL2 = "stun:stun1.l.google.com:19302";
+        private const string FFMPEG_PATH = @"C:\Program Files (x86)\Ffmpeg\bin";
 
-        public static SIPSorceryMedia.Encoders.VideoEncoderEndPoint VideoEncoderEndPoint { get; private set; }
+        public static RTCPeerConnectionState ConnectionState => pc != null ? pc.connectionState : RTCPeerConnectionState.disconnected;
+        
+        //public static FFmpegVideoEndPoint FFmpegVideo { get; private set; }
+        public static VideoEncoderEndPoint VideoEncoder { get; private set; }
 
         private static RTCPeerConnection pc;
 
 
         public static async void StartPeerConnection()
         {
-            VideoEncoderEndPoint = new SIPSorceryMedia.Encoders.VideoEncoderEndPoint();
+            VideoEncoder = new VideoEncoderEndPoint();
+            
+            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_VERBOSE, FFMPEG_PATH);
 
             pc = CreatePeerConnection();
 
@@ -67,6 +75,9 @@ namespace ControlSync.Client
 
             pc.close();
             pc = null;
+            VideoEncoder.Dispose();
+            VideoEncoder = null;
+
             ClientSend.ClosePeerConnection();
         }
         private static RTCPeerConnection CreatePeerConnection()
@@ -78,17 +89,15 @@ namespace ControlSync.Client
             // Create a new peer connection.
             var pc = new RTCPeerConnection(config);
 
-            // Create a video track from the default camera device.
-            /*var videoTrack = new VideoTrackSource(new VideoFormat(VideoCodecsEnum.VP8, 100));
-            await videoTrack.StartVideoSource();
-            pc.addTrack(videoTrack);*/
 
-            VideoEncoderEndPoint.OnVideoSourceEncodedSample += pc.SendVideo;
+            VideoEncoder.OnVideoSourceEncodedSample += pc.SendVideo;
 
-            var videoTrack = new MediaStreamTrack(VideoEncoderEndPoint.GetVideoSourceFormats(), MediaStreamStatusEnum.SendOnly);
+            //VideoEncoder.RestrictFormats(format => format.Codec == VideoCodecsEnum.H264);
+
+            var videoTrack = new MediaStreamTrack(VideoEncoder.GetVideoSourceFormats(), MediaStreamStatusEnum.SendOnly);
             pc.addTrack(videoTrack);
 
-            pc.OnVideoFormatsNegotiated += (sdpFormat) => VideoEncoderEndPoint.SetVideoSourceFormat(sdpFormat.First());
+            pc.OnVideoFormatsNegotiated += (sdpFormat) => VideoEncoder.SetVideoSourceFormat(sdpFormat.First());
 
             // Add a handler for ICE candidate events.
             // These candidates need to be sent to the remote peer.
@@ -104,7 +113,7 @@ namespace ControlSync.Client
                 }
             };
 
-
+            
             // Add a handler for connection state change events.
             // This can be used to monitor the status of the WebRTC session.
             pc.onconnectionstatechange += (state) =>

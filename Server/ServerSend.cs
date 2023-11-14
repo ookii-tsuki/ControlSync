@@ -97,7 +97,7 @@ namespace Server
                 _packet.Write(_player.id);
                 _packet.Write(_player.buttonState);
 
-                SendTCPDataToAll(_packet); // was UDP
+                SendUDPDataToAll(_packet); // was UDP
             }
         }
         public static void AnalogState(Player _player)
@@ -108,7 +108,7 @@ namespace Server
             for (int i = 0; i < _player.analogInput.Length; i++)
                 _packet.Write(_player.analogInput[i]);
 
-            SendTCPDataToAll(_packet); // was UDP
+            SendUDPDataToAll(_packet); // was UDP
             
         }
         public static void PeerOffer(Player _player, int toId)
