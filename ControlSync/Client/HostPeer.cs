@@ -8,8 +8,11 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
-using SIPSorceryMedia.Encoders;
+using SIPSorceryMedia.External;
 using SIPSorceryMedia.FFmpeg;
+using SIPSorceryMedia.OpusCodec;
+using SIPSorceryMedia.SDL2;
+using System.IO;
 
 namespace ControlSync.Client
 {
@@ -17,26 +20,29 @@ namespace ControlSync.Client
     {
         private const string STUN_URL1 = "stun:stun.l.google.com:19302";
         private const string STUN_URL2 = "stun:stun1.l.google.com:19302";
-        private const string FFMPEG_PATH = @"C:\Program Files (x86)\Ffmpeg\bin";
 
-        public static RTCPeerConnectionState ConnectionState => pc != null ? pc.connectionState : RTCPeerConnectionState.disconnected;
+        public static RTCPeerConnectionState ConnectionState => peerConnection != null ? peerConnection.connectionState : RTCPeerConnectionState.disconnected;
         
-        //public static FFmpegVideoEndPoint FFmpegVideo { get; private set; }
-        public static VideoEncoderEndPoint VideoEncoder { get; private set; }
+        public static FFmpegVideoEndPoint1 VideoEncoder { get; private set; }
+        public static WasAPIAudioSource AudioEncoder { get; private set; }
 
-        private static RTCPeerConnection pc;
+        private static RTCPeerConnection peerConnection;
 
-
+        private static readonly string ffmpegPath = Path.Combine(Environment.CurrentDirectory, "FFMPEG");
         public static async void StartPeerConnection()
         {
-            VideoEncoder = new VideoEncoderEndPoint();
+            Screenshare.Start();
+
+            VideoEncoder = new FFmpegVideoEndPoint1();
+
+            AudioEncoder = new WasAPIAudioSource(new OpusAudioEncoder());
             
-            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_VERBOSE, FFMPEG_PATH);
+            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_DEBUG, ffmpegPath);
 
-            pc = CreatePeerConnection();
+            peerConnection = CreatePeerConnection();
 
-            var offerSdp = pc.createOffer(null);
-            await pc.setLocalDescription(offerSdp);
+            var offerSdp = peerConnection.createOffer(null);
+            await peerConnection.setLocalDescription(offerSdp);
 
             var offerSerialised = JsonConvert.SerializeObject(offerSdp,
                  new Newtonsoft.Json.Converters.StringEnumConverter());
@@ -52,31 +58,34 @@ namespace ControlSync.Client
 
             RTCSessionDescriptionInit answerInit = JsonConvert.DeserializeObject<RTCSessionDescriptionInit>(remoteAnswer);
             
-            pc.setRemoteDescription(answerInit);
+            peerConnection.setRemoteDescription(answerInit);
 
             ClientPg.Log("Received Answer");
         }
 
         public static void AddICECandidate(string base64ICECandidate)
         {
-            if (pc == null)
+            if (peerConnection == null)
                 return;
 
             string remoteICECandidate = Encoding.UTF8.GetString(Convert.FromBase64String(base64ICECandidate));
 
             RTCIceCandidateInit iceCandidateInit = JsonConvert.DeserializeObject<RTCIceCandidateInit>(remoteICECandidate);
 
-            pc.addIceCandidate(iceCandidateInit);
+            peerConnection.addIceCandidate(iceCandidateInit);
         }
         public static void CloseConnection()
         {
-            if (pc ==  null)
+            if (peerConnection ==  null)
                 return;
 
-            pc.close();
-            pc = null;
+            peerConnection.close();
+            peerConnection = null;
             VideoEncoder.Dispose();
             VideoEncoder = null;
+            AudioEncoder.CloseAudio();
+            AudioEncoder = null;
+            Screenshare.Close();
 
             ClientSend.ClosePeerConnection();
         }
@@ -91,13 +100,18 @@ namespace ControlSync.Client
 
 
             VideoEncoder.OnVideoSourceEncodedSample += pc.SendVideo;
+            AudioEncoder.OnAudioSourceEncodedSample += pc.SendAudio;
 
-            //VideoEncoder.RestrictFormats(format => format.Codec == VideoCodecsEnum.H264);
+            VideoEncoder.RestrictFormats(format => format.Codec == VideoCodecsEnum.H264);
+            AudioEncoder.RestrictFormats(format => format.Codec == AudioCodecsEnum.OPUS);
 
             var videoTrack = new MediaStreamTrack(VideoEncoder.GetVideoSourceFormats(), MediaStreamStatusEnum.SendOnly);
+            var audioTrack = new MediaStreamTrack(AudioEncoder.GetAudioSourceFormats(), MediaStreamStatusEnum.SendOnly);
             pc.addTrack(videoTrack);
+            pc.addTrack(audioTrack);
 
             pc.OnVideoFormatsNegotiated += (sdpFormat) => VideoEncoder.SetVideoSourceFormat(sdpFormat.First());
+            pc.OnAudioFormatsNegotiated += (sdpFormat) => AudioEncoder.SetAudioSourceFormat(sdpFormat.First());
 
             // Add a handler for ICE candidate events.
             // These candidates need to be sent to the remote peer.
@@ -123,20 +137,6 @@ namespace ControlSync.Client
 
             pc.OnTimeout += (mediaType) => ClientPg.Log($"Timeout on media {mediaType}.");
             pc.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state changed to {state}.");
-            pc.onconnectionstatechange += (state) =>
-            {
-                ClientPg.Log($"Peer connection connected changed to {state}.");
-                if (state == RTCPeerConnectionState.connected)
-                {
-                    //await audioSrc.StartAudio();
-                    //await testPatternSource.StartVideo();
-                }
-                else if (state == RTCPeerConnectionState.closed || state == RTCPeerConnectionState.failed)
-                {
-                    //await audioSrc.CloseAudio();
-                    //await testPatternSource.CloseVideo();
-                }
-            };
 
             return pc;
         }

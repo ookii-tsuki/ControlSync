@@ -38,7 +38,7 @@ namespace ControlSync.Client
             SendUDPData(_packet);
             
         }
-        public static void AnalogState(int[] inputs)
+        public static void AnalogState(short[] inputs)
         {
             using Packet _packet = new Packet((int)ClientPackets.AnalogState);
 

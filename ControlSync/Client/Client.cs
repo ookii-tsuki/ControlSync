@@ -319,8 +319,8 @@ namespace ControlSync.Client
                     Manager.CloseScreen();
                     if (!isHost)
                         ClientPeer.CloseConnection();
-                    tcp.socket.Close();
-                    udp.socket.Close();
+                    tcp.socket?.Close();
+                    udp.socket?.Close();
                     ClientPg.Log("Disconnected from server.");
                     onDisconnect?.Invoke();
                 }catch(Exception ex)

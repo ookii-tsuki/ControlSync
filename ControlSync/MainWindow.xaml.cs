@@ -35,6 +35,8 @@ namespace ControlSync
             Client.Client.onConnect += () => Dispatcher.Invoke(() => mappingPage.IsEnabled = false);
             Client.Client.onDisconnect += () => Dispatcher.Invoke(() => mappingPage.IsEnabled = true);
             Client.Client.onFailConnect += () => Dispatcher.Invoke(() => mappingPage.IsEnabled = true);
+
+            new Mapping(); // to initialize the mapping
         }
         private static void MainThread()
         {

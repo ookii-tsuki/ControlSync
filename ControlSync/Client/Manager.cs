@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Windows.Media.Imaging;
-using System.Windows.Media;
-using LZ4;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace ControlSync.Client
 {
@@ -16,22 +13,28 @@ namespace ControlSync.Client
         public static void ConnectController(int _id, string _username)
         {
             PlayerManager player = new PlayerManager(_id, _username);
-            player.ConnectController();
+
+            if(Client.isHost)
+                player.ConnectController();
 
             players.Add(_id, player);
             UpdateList();
         }
         public static void DisconnectPlayer(int _id)
         {
-            players[_id].DisconnectController();
+            if (Client.isHost)
+                players[_id].DisconnectController();
             players.Remove(_id);
             UpdateList();
         }
         public static void DisconnectAll()
         {
-            foreach (var player in players)
+            if (Client.isHost)
             {
-                player.Value.DisconnectController();
+                foreach (var player in players)
+                {
+                    player.Value.DisconnectController();
+                }
             }
             players.Clear();
             UpdateList();

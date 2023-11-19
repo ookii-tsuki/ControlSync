@@ -97,7 +97,7 @@ namespace Server
                 _packet.Write(_player.id);
                 _packet.Write(_player.buttonState);
 
-                SendUDPDataToAll(_packet); // was UDP
+                SendUDPData(Client.HOST_ID, _packet);
             }
         }
         public static void AnalogState(Player _player)
@@ -108,7 +108,7 @@ namespace Server
             for (int i = 0; i < _player.analogInput.Length; i++)
                 _packet.Write(_player.analogInput[i]);
 
-            SendUDPDataToAll(_packet); // was UDP
+            SendUDPData(Client.HOST_ID, _packet);
             
         }
         public static void PeerOffer(Player _player, int toId)
@@ -131,7 +131,7 @@ namespace Server
 
             _packet.Write(base64Answer);
 
-            SendTCPData(1, _packet);
+            SendTCPData(Client.HOST_ID, _packet);
         }
 
         public static void ICECandidate(string base64ICECandidate, int toId)
@@ -152,7 +152,7 @@ namespace Server
 
             Console.WriteLine("Peer connection is closed by the host");
 
-            SendTCPDataToAll(1, _packet);
+            SendTCPDataToAll(Client.HOST_ID, _packet);
         }
         #endregion
     }

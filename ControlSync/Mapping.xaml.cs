@@ -52,7 +52,7 @@ namespace ControlSync
                 clickedAnalog = new AnalogInput
                 {
                     Type = (Analog)Enum.Parse(typeof(Analog), name[0]),
-                    Value = int.Parse(btn.Content.ToString())
+                    Value = short.Parse(btn.Content.ToString())
                 };
             }
         }

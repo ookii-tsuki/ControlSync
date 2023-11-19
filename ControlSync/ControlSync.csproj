@@ -31,19 +31,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Concentus" Version="1.1.7" />
     <PackageReference Include="FFmpeg.AutoGen" Version="4.4.1.1" />
-    <PackageReference Include="lz4net" Version="1.0.15.93" />
     <PackageReference Include="ModernWpfUI" Version="0.9.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="OpenH264.NET" Version="1.0.4" />
     <PackageReference Include="SharpDX" Version="4.2.0" />
     <PackageReference Include="SharpDX.Direct2D1" Version="4.2.0" />
     <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+    <PackageReference Include="SharpDX.DirectSound" Version="4.2.0" />
     <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
     <PackageReference Include="SIPSorcery" Version="6.0.12" />
     <PackageReference Include="SIPSorceryMedia" Version="4.0.67-pre" />
     <PackageReference Include="SIPSorceryMedia.Encoders" Version="0.0.12-pre" />
     <PackageReference Include="SIPSorceryMedia.FFmpeg" Version="1.2.1" />
+    <PackageReference Include="SIPSorceryMedia.SDL2" Version="1.2.0" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
   </ItemGroup>
 
@@ -71,9 +72,36 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="FFMPEG\avcodec-58.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="FFMPEG\avdevice-58.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="FFMPEG\avfilter-7.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="FFMPEG\avformat-58.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="FFMPEG\avutil-56.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="FFMPEG\postproc-55.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="FFMPEG\swresample-3.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="FFMPEG\swscale-5.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="SDL2.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="x264.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

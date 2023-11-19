@@ -11,7 +11,7 @@ namespace Server
         public string username;
 
         public int buttonState;
-        public int[] analogInput = new int[6];
+        public short[] analogInput = new short[6];
         public string base64Offer;
         public List<string> iceCandidates = new List<string>();
 
@@ -23,6 +23,9 @@ namespace Server
 
         public void Update()
         {
+            if (id == Client.HOST_ID)
+                return;
+
             ServerSend.ButtonState(this);
             ServerSend.AnalogState(this);
         }

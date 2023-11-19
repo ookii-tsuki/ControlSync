@@ -19,9 +19,9 @@ namespace Server
             }
             Server.clients[_fromClient].SendIntoGame(_username);
 
-            if (_fromClient != 1)
+            if (_fromClient != Client.HOST_ID)
             {
-                Player hostPlayer = Server.clients[1].player;
+                Player hostPlayer = Server.clients[Client.HOST_ID].player;
 
                 hostPlayer.SendAllICECandidates(_fromClient);
                 hostPlayer.SendOffer(_fromClient);
@@ -37,7 +37,7 @@ namespace Server
         {
             if (Server.clients.ContainsKey(_fromClient) && Server.clients[_fromClient].player != null)
                 for (int i = 0; i < 6; i++)
-                    Server.clients[_fromClient].player.analogInput[i] = _packet.ReadInt();
+                    Server.clients[_fromClient].player.analogInput[i] = _packet.ReadShort();
         }
 
         public static void PeerOffer(int _fromClient, Packet _packet)

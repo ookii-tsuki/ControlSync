@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Threading;
 using D2D = SharpDX.Direct2D1;
 using Device = SharpDX.Direct3D11.Device;
 using Factory1 = SharpDX.DXGI.Factory1;
@@ -22,7 +23,7 @@ namespace ControlSync.Client
         // # of output device (i.e. monitor)
         const int numOutput = 0;
 
-        static bool initilized = false;
+        static bool closed = false;
         static Factory1 factory;
         static Adapter1 adapter;
         static Device device;
@@ -31,11 +32,12 @@ namespace ControlSync.Client
         static int streamWidth;
         static int streamHeight;
         static OutputDuplication duplicatedOutput;
-        static OutputDescription description;
 
-        private static void Init()
+        static Thread screenshareThread;
+        public static void Start()
         {
-            initilized = true;
+            if (!Client.isHost) 
+                return;
 
             // Create DXGI Factory1
             factory = new Factory1();
@@ -48,51 +50,71 @@ namespace ControlSync.Client
             output = adapter.GetOutput(numOutput);
             output1 = output.QueryInterface<Output1>();
 
-            description = output1.Description;
 
             streamWidth = 1280;
             streamHeight = 720;
 
             // Duplicate the output
             duplicatedOutput = output1.DuplicateOutput(device);
+
+            screenshareThread = new Thread(SendScreenBuffer);
+
+            closed = false;
+
+            screenshareThread.Start();
         }
-        public static void SendScreenBufferToServer()
+
+        public static void Close()
         {
-            if (!Client.isHost) return;
-
-
-            if (!initilized)
-                Init();
-
-            if (HostPeer.VideoEncoder == null)
-                return;
-
-            var bitmap = GetScreenShot();
-
-            if (bitmap == null) return;
-
-
-            int width = bitmap.Width;
-            int height = bitmap.Height;
-            int stride = width * 3; // 3 bytes per pixel in RGB format
-            byte[] rgbBuffer = new byte[height * stride];
-
-            BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            System.Runtime.InteropServices.Marshal.Copy(bitmapData.Scan0, rgbBuffer, 0, rgbBuffer.Length);
-            bitmap.UnlockBits(bitmapData);
-
-            bitmap.Dispose();
-
-            try
-            {
-                HostPeer.VideoEncoder?.ExternalVideoSourceRawSample(30, width, height, rgbBuffer, VideoPixelFormatsEnum.Rgb);
-            }
-            catch { }
+            closed = true;
+            factory.Dispose();
+            adapter.Dispose();
+            device.Dispose();
+            output.Dispose();
+            output1.Dispose();
+            duplicatedOutput.Dispose();
         }
+        
+        private static void SendScreenBuffer()
+        {
+            while (!closed)
+            {
+
+                if (HostPeer.VideoEncoder == null)
+                {
+                    Thread.Sleep(1000);
+                    continue;
+                }
+                var bitmap = GetScreenShot();
+
+                if (bitmap == null) continue;
+
+
+                int width = bitmap.Width;
+                int height = bitmap.Height;
+                int stride = width * 3; // 3 bytes per pixel in RGB format
+                byte[] rgbBuffer = new byte[height * stride];
+
+                BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+                System.Runtime.InteropServices.Marshal.Copy(bitmapData.Scan0, rgbBuffer, 0, rgbBuffer.Length);
+                bitmap.UnlockBits(bitmapData);
+
+                bitmap.Dispose();
+
+
+                try
+                {
+                    HostPeer.VideoEncoder?.ExternalVideoSourceRawSample(30, width, height, rgbBuffer, VideoPixelFormatsEnum.Rgb);
+                }
+                catch { }
+
+                Thread.Sleep(10);
+            }
+        }
+
 
         private static System.Drawing.Bitmap GetScreenShot()
         {
-
 
             try
             {
@@ -118,7 +140,7 @@ namespace ControlSync.Client
                 {
                     CpuAccessFlags = CpuAccessFlags.Read, // only GPU
                     BindFlags = BindFlags.RenderTarget, // to use D2D
-                    Format = Format.B8G8R8A8_UNorm,
+                    Format = SharpDX.DXGI.Format.B8G8R8A8_UNorm,
                     Width = streamWidth,
                     Height = streamHeight,
                     OptionFlags = ResourceOptionFlags.None,
@@ -158,7 +180,7 @@ namespace ControlSync.Client
                 {
                     CpuAccessFlags = CpuAccessFlags.Read, // only GPU
                     BindFlags = BindFlags.None, // to use D2D
-                    Format = Format.B8G8R8A8_UNorm,
+                    Format = SharpDX.DXGI.Format.B8G8R8A8_UNorm,
                     Width = streamWidth,
                     Height = streamHeight,
                     OptionFlags = ResourceOptionFlags.None,
@@ -210,14 +232,13 @@ namespace ControlSync.Client
             {
                 if (e.ResultCode.Code != SharpDX.DXGI.ResultCode.WaitTimeout.Result.Code)
                 {
-                    throw e;
+                    ClientPg.Log(e.Message);
                 }
             }
 
 
             return null;
         }
-
 
     }
 

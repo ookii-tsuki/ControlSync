@@ -9,6 +9,8 @@ namespace Server
 {
     class Client
     {
+        public const int HOST_ID = 1;
+
         public static int dataBufferSize = 4096;
 
         public int id;

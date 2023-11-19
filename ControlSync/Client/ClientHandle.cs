@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Net;
 using ScpDriverInterface;
+using System.Diagnostics;
 
 namespace ControlSync.Client
 {
@@ -49,11 +50,11 @@ namespace ControlSync.Client
                 for (int i = 0; i < 6; i++)
                 {
                     if ((Analog)i == Analog.LeftTrigger || (Analog)i == Analog.RightTrigger)
-                        Manager.players[_id].Trigger((Analog)i, (byte)_packet.ReadInt());
+                        Manager.players[_id].Trigger((Analog)i, (byte)_packet.ReadShort());
                     else
                     {
-                        int val = _packet.ReadInt();
-                        Manager.players[_id].MoveStick((Analog)i, (short)val);
+                        short val = _packet.ReadShort();
+                        Manager.players[_id].MoveStick((Analog)i, val);
                     }
                 }
             }

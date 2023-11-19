@@ -16,7 +16,7 @@ namespace ControlSync
     public class AnalogInput
     {
         public Analog Type { get; set; }
-        public int Value { get; set; }
+        public short Value { get; set; }
     }
     [JsonObject(MemberSerialization.OptIn)]
     public class ControllerMap

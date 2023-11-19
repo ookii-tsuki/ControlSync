@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 
 namespace ControlSync.Client
 {
@@ -14,7 +16,7 @@ namespace ControlSync.Client
         {
             if (Client.isConnected)
             {
-                int[] input = new int[6]
+                short[] input = new short[6]
                 {
                     0, 0, 0, 0, 0, 0
                 };
@@ -39,8 +41,30 @@ namespace ControlSync.Client
                                 buttons &= ~(X360Buttons)button.XBtnControl;
                     });
                 }
-                ClientSend.ButtonState((int)buttons);
-                ClientSend.AnalogState(input);
+
+                if (Client.isHost)
+                {
+                    int id = Client.myId;
+                    if (!Manager.players.ContainsKey(id))
+                        return;
+
+                    Manager.players[id].Click(buttons);
+
+                    for (int i = 0; i < 6; i++)
+                    {
+                        if ((Analog)i == Analog.LeftTrigger || (Analog)i == Analog.RightTrigger)
+                            Manager.players[id].Trigger((Analog)i, (byte)input[i]);
+                        else
+                        {
+                            Manager.players[id].MoveStick((Analog)i, input[i]);
+                        }
+                    }
+                }
+                else
+                {
+                    ClientSend.ButtonState((int)buttons);
+                    ClientSend.AnalogState(input);
+                }
             }
         }
     }
