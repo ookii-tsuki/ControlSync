@@ -106,9 +106,6 @@ namespace SIPSorceryMedia.OpusCodec
 
                         //log.LogDebug($"[EncodeAudioTest] frameSize:[{frameSize}] - DecodedShort:[{pcm.Length}] - EncodedByte.Length:[{result.Length}]");
 
-                        var decoded = DecodeAudio(result, format);
-                        byte[] pcmBytes = decoded.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
-                        //Screenshare.writer?.Write(pcmBytes, 0, pcmBytes.Length);
                         return result;
                     }
                 }

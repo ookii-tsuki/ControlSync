@@ -104,11 +104,11 @@ namespace ControlSync.Client
 
                 try
                 {
-                    HostPeer.VideoEncoder?.ExternalVideoSourceRawSample(30, width, height, rgbBuffer, VideoPixelFormatsEnum.Rgb);
+                    HostPeer.VideoEncoder?.ExternalVideoSourceRawSample(20, width, height, rgbBuffer, VideoPixelFormatsEnum.Rgb);
                 }
                 catch { }
 
-                Thread.Sleep(10);
+                Thread.Sleep(1);
             }
         }
 
