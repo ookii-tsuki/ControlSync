@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using System.Threading;
 using D2D = SharpDX.Direct2D1;
 using Device = SharpDX.Direct3D11.Device;
@@ -85,26 +86,14 @@ namespace ControlSync.Client
                     Thread.Sleep(1000);
                     continue;
                 }
-                var bitmap = GetScreenShot();
+                byte[] rgbBuffer = GetScreenShot();
 
-                if (bitmap == null) continue;
-
-
-                int width = bitmap.Width;
-                int height = bitmap.Height;
-                int stride = width * 3; // 3 bytes per pixel in RGB format
-                byte[] rgbBuffer = new byte[height * stride];
-
-                BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-                System.Runtime.InteropServices.Marshal.Copy(bitmapData.Scan0, rgbBuffer, 0, rgbBuffer.Length);
-                bitmap.UnlockBits(bitmapData);
-
-                bitmap.Dispose();
+                if (rgbBuffer == null) continue;
 
 
                 try
                 {
-                    HostPeer.VideoEncoder?.ExternalVideoSourceRawSample(20, width, height, rgbBuffer, VideoPixelFormatsEnum.Rgb);
+                    HostPeer.VideoEncoder?.ExternalVideoSourceRawSample(20, streamWidth, streamHeight, rgbBuffer, VideoPixelFormatsEnum.Rgb);
                 }
                 catch { }
 
@@ -113,12 +102,11 @@ namespace ControlSync.Client
         }
 
 
-        private static System.Drawing.Bitmap GetScreenShot()
+        private static byte[] GetScreenShot()
         {
 
             try
             {
-                var s = Stopwatch.StartNew();
                 SharpDX.DXGI.Resource screenResource;
                 OutputDuplicateFrameInformation duplicateFrameInformation;
 
@@ -198,33 +186,41 @@ namespace ControlSync.Client
                 // Get the desktop capture texture
                 var mapSource = bitmap1.Map(MapOptions.Read);
 
-                // Create Drawing.Bitmap
-                var bitmap = new System.Drawing.Bitmap(streamWidth, streamHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                var boundsRect = new Rectangle(0, 0, streamWidth, streamHeight);
+                // Allocate an RGB buffer
+                int width = desc2.Width;
+                int height = desc2.Height;
+                int stride = width * 3; // 3 bytes per pixel in RGB format
+                byte[] rgbBuffer = new byte[height * stride];
 
-                // Copy pixels from screen capture Texture to GDI bitmap
-                var mapDest = bitmap.LockBits(boundsRect, ImageLockMode.WriteOnly, bitmap.PixelFormat);
+                // Copy the data from the texture to the RGB buffer
                 var sourcePtr = mapSource.DataPointer;
-                var destPtr = mapDest.Scan0;
-                for (int y = 0; y < streamHeight; y++)
+                for (int y = 0; y < height; y++)
                 {
                     // Copy a single line 
-                    Utilities.CopyMemory(destPtr, sourcePtr, (streamWidth) * 4);
+                    for (int x = 0; x < width; x++)
+                    {
+                        // Get the RGBA value from the texture
+                        int rgba = Marshal.ReadInt32(sourcePtr);
 
-                    // Advance pointers
-                    sourcePtr = IntPtr.Add(sourcePtr, mapSource.Pitch);
-                    destPtr = IntPtr.Add(destPtr, mapDest.Stride);
+                        // Extract the RGB components and store them in the buffer
+                        rgbBuffer[y * stride + x * 3] = (byte)(rgba & 0xFF); // Red
+                        rgbBuffer[y * stride + x * 3 + 1] = (byte)((rgba >> 8) & 0xFF); // Green
+                        rgbBuffer[y * stride + x * 3 + 2] = (byte)((rgba >> 16) & 0xFF); // Blue
+
+                        // Advance the source pointer by 4 bytes
+                        sourcePtr = IntPtr.Add(sourcePtr, 4);
+                    }
+
+                    // Advance the source pointer by the pitch
+                    sourcePtr = IntPtr.Add(sourcePtr, mapSource.Pitch - width * 4);
                 }
 
-                // Release source and dest locks
-                bitmap.UnlockBits(mapDest);
                 bitmap1.Unmap();
                 screenResource.Dispose();
                 duplicatedOutput.ReleaseFrame();
 
-                s.Stop();
 
-                return bitmap;
+                return rgbBuffer;
 
 
             }
