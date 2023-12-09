@@ -13,15 +13,14 @@
 // BSD 3-Clause "New" or "Revised" License, see included LICENSE.md file.
 //-----------------------------------------------------------------------------
 
+using Microsoft.Extensions.Logging;
+using NAudio.Wave;
+using SIPSorceryMedia.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using NAudio.Wave;
-using SharpDX.Direct2D1;
-using SIPSorceryMedia.Abstractions;
 
 namespace SIPSorceryMedia.SDL2
 {
@@ -40,7 +39,7 @@ namespace SIPSorceryMedia.SDL2
         protected bool _isPaused = true;
         protected bool _isClosed = true;
 
-        public event SourceErrorDelegate ? OnAudioSinkError = null;
+        public event SourceErrorDelegate? OnAudioSinkError = null;
 
         public static WaveFileWriter writer;
 
@@ -99,7 +98,7 @@ namespace SIPSorceryMedia.SDL2
                 var audioSpec = SDL2Helper.GetAudioSpec(audioFormat.ClockRate, 2, 960);
 
                 _audioOutDeviceId = SDL2Helper.OpenAudioPlaybackDevice(_audioOutDeviceName, ref audioSpec);
-                if(_audioOutDeviceId > 0)
+                if (_audioOutDeviceId > 0)
                     log.LogDebug($"[InitPlaybackDevice] Id:[{_audioOutDeviceId}] - DeviceName:[{_audioOutDeviceName}]");
                 else
                 {
@@ -138,7 +137,7 @@ namespace SIPSorceryMedia.SDL2
 
         public void GotAudioRtp(IPEndPoint remoteEndPoint, uint ssrc, uint seqnum, uint timestamp, int payloadID, bool marker, byte[] payload)
         {
-            if ( (_audioEncoder != null) && (_audioOutDeviceId > 0) )
+            if ((_audioEncoder != null) && (_audioOutDeviceId > 0))
             {
                 // Decode sample
                 var pcmSample = _audioEncoder.DecodeAudio(payload, _audioFormatManager.SelectedFormat);
@@ -175,7 +174,7 @@ namespace SIPSorceryMedia.SDL2
 
         public Task StartAudioSink()
         {
-            if(!_isStarted)
+            if (!_isStarted)
             {
                 if (_audioOutDeviceId > 0)
                 {

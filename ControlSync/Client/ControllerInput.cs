@@ -1,12 +1,6 @@
 ﻿using ScpDriverInterface;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media.Animation;
 
 namespace ControlSync.Client
 {
@@ -38,7 +32,7 @@ namespace ControlSync.Client
                         }
                         else
                             if (button.XBtnControl != null)
-                                buttons &= ~(X360Buttons)button.XBtnControl;
+                            buttons &= ~(X360Buttons)button.XBtnControl;
                     });
                 }
 

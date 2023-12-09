@@ -30,15 +30,17 @@ namespace ControlSync
         [JsonProperty]
         public AnalogInput XAnalogControl { get; set; }
 
-        public string PcControlName { get => PcControl.ToString();}
-        public string XControlName { get
+        public string PcControlName { get => PcControl.ToString(); }
+        public string XControlName
+        {
+            get
             {
                 if (XBtnControl != null)
                     return XBtnControl.ToString();
                 string name = XAnalogControl.Type.ToString();
                 name = XAnalogControl.Value < 0 ? "-" + name : "+" + name;
                 return name;
-            } 
+            }
         }
     }
 }

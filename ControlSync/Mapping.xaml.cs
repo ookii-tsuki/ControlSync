@@ -17,8 +17,8 @@ namespace ControlSync
         public static Mapping instance;
         public static List<ControllerMap> buttons = new List<ControllerMap>();
 
-        public List<ControllerMap> Buttons { get => buttons;}
-        public List<string> Profiles { get => ProfileManager.Profiles; } 
+        public List<ControllerMap> Buttons { get => buttons; }
+        public List<string> Profiles { get => ProfileManager.Profiles; }
 
         private X360Buttons? clickedButton;
         private AnalogInput clickedAnalog;
@@ -59,7 +59,8 @@ namespace ControlSync
 
         public void SetKey(object sender, KeyEventArgs e)
         {
-            if (clickedButton != null || clickedAnalog != null) {
+            if (clickedButton != null || clickedAnalog != null)
+            {
                 var button = Buttons.Find(x => x.PcControl == e.Key || x.XBtnControl != null ? x.XBtnControl == clickedButton : x.XAnalogControl == clickedAnalog);
                 if (button != null)
                     buttons.Remove(button);
@@ -102,7 +103,7 @@ namespace ControlSync
         private async void addProfileBtn_Click(object sender, RoutedEventArgs e)
         {
             bool error = false;
-            Retry:
+        Retry:
             ContentDialog dialog = new ContentDialog();
             dialog.Title = "Add profile";
             dialog.PrimaryButtonText = "Save";
@@ -115,7 +116,7 @@ namespace ControlSync
             if (result == ContentDialogResult.Primary)
             {
                 string name = ((AddProfile)dialog.Content).name.Text;
-                if(string.IsNullOrEmpty(name))
+                if (string.IsNullOrEmpty(name))
                 {
                     error = true;
                     goto Retry;
@@ -147,7 +148,7 @@ namespace ControlSync
                 {
                     Settings.Default.lastSelectedProfile = profiles.SelectedIndex;
                     Settings.Default.Save();
-                }                
+                }
             }
         }
     }

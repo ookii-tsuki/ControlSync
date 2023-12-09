@@ -1,22 +1,23 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Windows;
-using Newtonsoft.Json;
 
 namespace ControlSync
 {
     public static class ProfileManager
     {
         static readonly string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        public static List<string> Profiles { get
+        public static List<string> Profiles
+        {
+            get
             {
                 string dir = Path.Combine(docs, "ControlSync");
                 DirectoryInfo d = new DirectoryInfo(dir);
                 FileInfo[] files = d.GetFiles("*.json");
                 return files.Select(x => x.Name.Remove(x.Name.LastIndexOf('.'))).ToList();
-            } 
+            }
         }
 
         public static void SaveProfile(List<ControllerMap> map, string name)

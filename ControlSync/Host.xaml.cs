@@ -1,20 +1,11 @@
-﻿using ControlSync.Client;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace ControlSync
 {
@@ -22,7 +13,7 @@ namespace ControlSync
     /// Interaction logic for Host.xaml
     /// </summary>
     public partial class Host : Page
-    {      
+    {
         static string publicIp;
         static string logData;
         static Host instance;
@@ -39,7 +30,7 @@ namespace ControlSync
             }
             instance = this;
             consoleBox.AppendText(logData);
-            
+
             try
             {
                 if (string.IsNullOrEmpty(publicIp))
@@ -48,7 +39,7 @@ namespace ControlSync
             catch { Log("Failed to get the public IPv4 address"); }
             pubIp.Content = $"Public IPv4: {(!string.IsNullOrEmpty(publicIp) ? publicIp : "N/A")}";
 
-            if(process == null)
+            if (process == null)
                 startBtn.Content = "Start server";
             else
                 startBtn.Content = "Stop server";

@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using System.Windows;
-using System.Windows.Input;
 
 namespace ControlSync.Client
 {
@@ -32,10 +28,10 @@ namespace ControlSync.Client
         /// <summary>Executes all code meant to run on the main thread. NOTE: Call this ONLY from the main thread.</summary>
         public static void UpdateMain()
         {
-            
+
             if (actionToExecuteOnMainThread)
-            {               
-                
+            {
+
                 executeCopiedOnMainThread.Clear();
                 lock (executeOnMainThread)
                 {

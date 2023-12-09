@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Server
 {
@@ -103,13 +101,13 @@ namespace Server
         public static void AnalogState(Player _player)
         {
             using Packet _packet = new Packet((int)ServerPackets.AnalogState);
-            
+
             _packet.Write(_player.id);
             for (int i = 0; i < _player.analogInput.Length; i++)
                 _packet.Write(_player.analogInput[i]);
 
             SendUDPData(Client.HOST_ID, _packet);
-            
+
         }
         public static void PeerOffer(Player _player, int toId)
         {
@@ -117,8 +115,8 @@ namespace Server
 
             _packet.Write(_player.base64Offer);
 
-            Console.WriteLine("sending offer to player " +  toId);
-            
+            Console.WriteLine("sending offer to player " + toId);
+
             SendTCPData(toId, _packet);
         }
 

@@ -14,7 +14,7 @@ namespace ControlSync.Client
         {
             PlayerManager player = new PlayerManager(_id, _username);
 
-            if(Client.isHost)
+            if (Client.isHost)
                 player.ConnectController();
 
             players.Add(_id, player);
@@ -72,7 +72,8 @@ namespace ControlSync.Client
         }
         private static void UpdateList()
         {
-            ClientPg.instance.Dispatcher.Invoke(() => {
+            ClientPg.instance.Dispatcher.Invoke(() =>
+            {
                 ClientPg.instance.playerList.ItemsSource = null;
                 ClientPg.instance.playerList.ItemsSource = ClientPg.instance.Players;
             });

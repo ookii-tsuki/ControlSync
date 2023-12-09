@@ -1,17 +1,10 @@
 ﻿using ControlSync.Client;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 
 namespace ControlSync
 {
@@ -24,11 +17,11 @@ namespace ControlSync
         static string logData;
 
         public Client.Client.Event onConnect, onDisconnect;
-        public List<Client.PlayerManager> Players { get => Client.Manager.players.Values.OrderBy(x => x.Id).ToList();}
+        public List<Client.PlayerManager> Players { get => Client.Manager.players.Values.OrderBy(x => x.Id).ToList(); }
         public ClientPg()
         {
             InitializeComponent();
-            if(instance != null)
+            if (instance != null)
             {
                 portTB.Text = instance.portTB.Text;
                 ipTB.Text = instance.ipTB.Text;
@@ -63,7 +56,7 @@ namespace ControlSync
 
         private void joinBtn_Click(object sender, RoutedEventArgs e)
         {
-            
+
             if (!Client.Client.isConnected)
             {
                 if (portTB.Text.Length == 0)
@@ -99,8 +92,8 @@ namespace ControlSync
         public static void Log(string message)
         {
             logData += message + "\n";
-            instance.Dispatcher.Invoke(() => 
-            { 
+            instance.Dispatcher.Invoke(() =>
+            {
                 instance.consoleBox.AppendText(message + "\n");
                 instance.consoleBox.ScrollToEnd();
             });

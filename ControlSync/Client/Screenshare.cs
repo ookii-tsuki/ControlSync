@@ -5,9 +5,6 @@ using SharpDX.DXGI;
 using SharpDX.Mathematics.Interop;
 using SIPSorceryMedia.Abstractions;
 using System;
-using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
 using D2D = SharpDX.Direct2D1;
@@ -37,7 +34,7 @@ namespace ControlSync.Client
         static Thread screenshareThread;
         public static void Start()
         {
-            if (!Client.isHost) 
+            if (!Client.isHost)
                 return;
 
             // Create DXGI Factory1
@@ -75,7 +72,7 @@ namespace ControlSync.Client
             output1.Dispose();
             duplicatedOutput.Dispose();
         }
-        
+
         private static void SendScreenBuffer()
         {
             while (!closed)

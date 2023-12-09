@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections;
+﻿using FFmpeg.AutoGen;
+using Microsoft.Extensions.Logging;
+using SIPSorceryMedia.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using FFmpeg.AutoGen;
-using Microsoft.Extensions.Logging;
-using SIPSorceryMedia.Abstractions;
 
 namespace SIPSorceryMedia.FFmpeg
 {
@@ -72,11 +71,11 @@ namespace SIPSorceryMedia.FFmpeg
 
         public void GotVideoFrame(IPEndPoint remoteEndPoint, uint timestamp, byte[] payload, VideoFormat format)
         {
-            if ( (!_isClosed) && (payload != null) && (OnVideoSinkDecodedSampleFaster != null) )
+            if ((!_isClosed) && (payload != null) && (OnVideoSinkDecodedSampleFaster != null))
             {
                 AVCodecID? codecID = FFmpegConvert.GetAVCodecID(_videoFormatManager.SelectedFormat.Codec);
-                if(codecID != null)
-                { 
+                if (codecID != null)
+                {
                     var imageRawSamples = _ffmpegEncoder.DecodeFaster(codecID.Value, payload, out var width, out var height);
 
                     if (imageRawSamples == null || width == 0 || height == 0)
@@ -134,7 +133,7 @@ namespace SIPSorceryMedia.FFmpeg
                 if (OnVideoSourceEncodedSample != null)
                 {
                     uint fps = (durationMilliseconds > 0) ? 1000 / durationMilliseconds : Helper.DEFAULT_VIDEO_FRAME_RATE;
-                    if(fps == 0)
+                    if (fps == 0)
                     {
                         fps = 1;
                     }
@@ -156,7 +155,7 @@ namespace SIPSorceryMedia.FFmpeg
                             }
                         }
                     }
-            
+
                     if (_forceKeyFrame)
                     {
                         _forceKeyFrame = false;

@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Numerics;
+﻿using ScpDriverInterface;
 using System.Net;
-using ScpDriverInterface;
-using System.Diagnostics;
 
 namespace ControlSync.Client
 {
@@ -39,13 +36,13 @@ namespace ControlSync.Client
         {
             int _id = _packet.ReadInt();
             int clickState = _packet.ReadInt();
-            if(Manager.players.ContainsKey(_id))
+            if (Manager.players.ContainsKey(_id))
                 Manager.players[_id].Click((X360Buttons)clickState);
         }
         public static void AnalogState(Packet _packet)
         {
             int _id = _packet.ReadInt();
-            if (Manager.players.ContainsKey(_id)) 
+            if (Manager.players.ContainsKey(_id))
             {
                 for (int i = 0; i < 6; i++)
                 {

@@ -1,12 +1,10 @@
 ﻿using Concentus.Enums;
 using Concentus.Structs;
-using ControlSync.Client;
 using Microsoft.Extensions.Logging;
 using SIPSorcery.Media;
 using SIPSorceryMedia.Abstractions;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace SIPSorceryMedia.OpusCodec
 {

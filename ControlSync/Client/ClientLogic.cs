@@ -1,11 +1,4 @@
-﻿using Org.BouncyCastle.Math.EC.Multiplier;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Security.RightsManagement;
-using System.Text;
-using System.Windows;
-using System.Windows.Input;
+﻿using System;
 
 namespace ControlSync.Client
 {

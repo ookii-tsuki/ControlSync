@@ -34,13 +34,13 @@ namespace SIPSorceryMedia.External
         private bool _isClosed = true;
 
 
-#region EVENT
+        #region EVENT
 
-        public event EncodedSampleDelegate ? OnAudioSourceEncodedSample = null;
-        public event RawAudioSampleDelegate ? OnAudioSourceRawSample = null;
-        public event SourceErrorDelegate ? OnAudioSourceError = null;
+        public event EncodedSampleDelegate? OnAudioSourceEncodedSample = null;
+        public event RawAudioSampleDelegate? OnAudioSourceRawSample = null;
+        public event SourceErrorDelegate? OnAudioSourceError = null;
 
-#endregion EVENT
+        #endregion EVENT
 
         public WasAPIAudioSource(IAudioEncoder audioEncoder)
         {
@@ -157,7 +157,7 @@ namespace SIPSorceryMedia.External
         }
 
         public Task PauseAudio()
-        {           
+        {
             return Task.CompletedTask;
         }
 
@@ -201,7 +201,7 @@ namespace SIPSorceryMedia.External
                 return _audioFormatManager.GetSourceFormats();
             return new List<AudioFormat>();
         }
-        
+
         public void SetAudioSourceFormat(AudioFormat audioFormat)
         {
             if (_audioFormatManager != null)
@@ -214,7 +214,7 @@ namespace SIPSorceryMedia.External
                 StartAudio();
             }
         }
-        
+
         public void RestrictFormats(Func<AudioFormat, bool> filter)
         {
             if (_audioFormatManager != null)

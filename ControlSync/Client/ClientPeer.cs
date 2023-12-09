@@ -108,7 +108,7 @@ namespace ControlSync.Client
             peerConnection.OnAudioFormatsNegotiated += (sdpFormat) => AudioEncoder.SetAudioSinkFormat(sdpFormat.First());
 
             peerConnection.OnVideoFrameReceived += VideoEncoder.GotVideoFrame;
-            
+
 
             VideoEncoder.OnVideoSinkDecodedSampleFaster += (RawImage img) =>
             {
@@ -132,7 +132,7 @@ namespace ControlSync.Client
                 var base64ICECandidate = Convert.ToBase64String(Encoding.UTF8.GetBytes(jCandidate));
 
                 ClientSend.ICECandidate(base64ICECandidate, 1);
-                
+
             };
 
 

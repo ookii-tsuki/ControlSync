@@ -17,7 +17,8 @@ namespace Server
                 else
                     Environment.Exit(-1);
             }
-            catch { 
+            catch
+            {
                 Console.WriteLine("Error parsing the port");
                 Environment.Exit(-1);
             }

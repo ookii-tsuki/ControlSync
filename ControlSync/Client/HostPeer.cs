@@ -1,18 +1,14 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
 using SIPSorcery.Net;
 using SIPSorceryMedia.Abstractions;
-using SIPSorcery.Media;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
 using SIPSorceryMedia.External;
 using SIPSorceryMedia.FFmpeg;
 using SIPSorceryMedia.OpusCodec;
-using SIPSorceryMedia.SDL2;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace ControlSync.Client
 {
@@ -22,7 +18,7 @@ namespace ControlSync.Client
         private const string STUN_URL2 = "stun:stun1.l.google.com:19302";
 
         public static RTCPeerConnectionState ConnectionState => peerConnection != null ? peerConnection.connectionState : RTCPeerConnectionState.disconnected;
-        
+
         public static FFmpegVideoEndPoint1 VideoEncoder { get; private set; }
         public static WasAPIAudioSource AudioEncoder { get; private set; }
 
@@ -36,7 +32,7 @@ namespace ControlSync.Client
             VideoEncoder = new FFmpegVideoEndPoint1();
 
             AudioEncoder = new WasAPIAudioSource(new OpusAudioEncoder());
-            
+
             FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_DEBUG, ffmpegPath);
 
             peerConnection = CreatePeerConnection();
@@ -57,7 +53,7 @@ namespace ControlSync.Client
             string remoteAnswer = Encoding.UTF8.GetString(Convert.FromBase64String(base64Answer));
 
             RTCSessionDescriptionInit answerInit = JsonConvert.DeserializeObject<RTCSessionDescriptionInit>(remoteAnswer);
-            
+
             peerConnection.setRemoteDescription(answerInit);
 
             ClientPg.Log("Received Answer");
@@ -76,7 +72,7 @@ namespace ControlSync.Client
         }
         public static void CloseConnection()
         {
-            if (peerConnection ==  null)
+            if (peerConnection == null)
                 return;
 
             peerConnection.close();
@@ -119,7 +115,7 @@ namespace ControlSync.Client
             {
                 var jCandidate = candidate.toJSON();
                 var base64ICECandidate = Convert.ToBase64String(Encoding.UTF8.GetBytes(jCandidate));
-                
+
                 for (int i = 2; i <= Manager.players.Count; i++)
                 {
                     var player = Manager.players[i];
@@ -127,7 +123,7 @@ namespace ControlSync.Client
                 }
             };
 
-            
+
             // Add a handler for connection state change events.
             // This can be used to monitor the status of the WebRTC session.
             pc.onconnectionstatechange += (state) =>

@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System;
-using System.Diagnostics;
 
 namespace ControlSync.Client
 {
@@ -23,7 +22,7 @@ namespace ControlSync.Client
         public static Event onFailConnect;
         public static Event onDisconnect;
         public static Event onConnect;
-        
+
         private delegate void PacketHandler(Packet _packet);
         private static Dictionary<int, PacketHandler> packetHandlers;
 
@@ -56,7 +55,7 @@ namespace ControlSync.Client
                     socket.BeginConnect(ip, port, ConnectCallback, socket);
                 }
                 catch (Exception ex)
-                { 
+                {
                     ClientPg.Log(ex.Message);
                 }
             }
@@ -96,7 +95,7 @@ namespace ControlSync.Client
                         stream.BeginWrite(_packet.ToArray(), 0, _packet.Length(), (IAsyncResult ar) =>
                         {
                             if (packetId == (int)ClientPackets.ClosePeerConnection)
-                                Disconnect(); 
+                                Disconnect();
                             // if this is the host peer we must wait for it to tell the other clients
                             // to close connections before disconnecting
                         }, null);
@@ -200,7 +199,8 @@ namespace ControlSync.Client
                 try
                 {
                     endPoint = new IPEndPoint(IPAddress.Parse(ip), port);
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     ClientPg.Log(ex.Message);
                 }
@@ -219,7 +219,8 @@ namespace ControlSync.Client
                     {
                         SendData(_packet);
                     }
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     ClientPg.Log(ex.Message);
                     onFailConnect?.Invoke();
@@ -323,7 +324,8 @@ namespace ControlSync.Client
                     udp.socket?.Close();
                     ClientPg.Log("Disconnected from server.");
                     onDisconnect?.Invoke();
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     ClientPg.Log(ex.Message);
                 }

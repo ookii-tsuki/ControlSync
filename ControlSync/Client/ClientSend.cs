@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ControlSync.Client
+﻿namespace ControlSync.Client
 {
     public class ClientSend
     {
@@ -27,16 +23,16 @@ namespace ControlSync.Client
             ClientPg.instance.Dispatcher.Invoke(() => _packet.Write(ClientPg.instance.uidTB.Text));
 
             SendTCPData(_packet);
-            
+
         }
 
         public static void ButtonState(int xButtons)
         {
             using Packet _packet = new Packet((int)ClientPackets.ButtonState);
 
-            _packet.Write(xButtons);               
+            _packet.Write(xButtons);
             SendUDPData(_packet);
-            
+
         }
         public static void AnalogState(short[] inputs)
         {
