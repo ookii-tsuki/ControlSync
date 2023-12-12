@@ -4,6 +4,9 @@ using System.Windows.Input;
 
 namespace ControlSync.Client
 {
+    /// <summary>
+    /// Reads input and sends it to the server.
+    /// </summary>
     public static class ControllerInput
     {
         public static void SendInputToServer()

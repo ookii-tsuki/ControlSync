@@ -1,5 +1,9 @@
 ﻿namespace ControlSync.Client
 {
+
+    /// <summary>
+    /// Methods for sending packets to the server.
+    /// </summary>
     public class ClientSend
     {
         private static void SendTCPData(Packet _packet)

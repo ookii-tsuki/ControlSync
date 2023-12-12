@@ -5,6 +5,9 @@ using System.Net.Sockets;
 
 namespace ControlSync.Client
 {
+    /// <summary>
+    /// Client class for connecting to the server and handling packets.
+    /// </summary>
     public static class Client
     {
         public delegate void Event();

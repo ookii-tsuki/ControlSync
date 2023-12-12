@@ -2,6 +2,9 @@
 
 namespace ControlSync.Client
 {
+    /// <summary>
+    /// Basic logic for the client.
+    /// </summary>
     static class ClientLogic
     {
         public static int Fps { get; private set; }

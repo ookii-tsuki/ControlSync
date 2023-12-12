@@ -9,6 +9,9 @@ using System.Collections.Generic;
 namespace SIPSorceryMedia.OpusCodec
 {
     // Based on this discussion: https://github.com/sipsorcery-org/sipsorcery/issues/518#issuecomment-888639894
+    /// <summary>
+    /// Encodes and decodes audio using the OPUS codec.
+    /// </summary>
     public class OpusAudioEncoder : IAudioEncoder
     {
         //Chrome use in SDP two audio channels, but the audio inself contains only one channel, so we must pass it as 2 channels in SDP but create a decoder/encoder with only one channel

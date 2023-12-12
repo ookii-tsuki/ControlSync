@@ -30,6 +30,9 @@ namespace ControlSync.Client
         ClosePeerConnection
     }
 
+    /// <summary>
+    /// Provides a way to read/write data from/to a packet
+    /// </summary>
     public class Packet : IDisposable
     {
         public int Id { get; private set; }

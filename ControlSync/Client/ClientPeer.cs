@@ -25,6 +25,11 @@ namespace ControlSync.Client
         private static SDL2AudioEndPoint1 AudioEncoder { get; set; }
 
         private static readonly string ffmpegPath = Path.Combine(Environment.CurrentDirectory, "FFMPEG");
+
+        /// <summary>
+        /// Starts the peer connection process.
+        /// </summary>
+        /// <param name="base64Offer">Offer in base 64</param>
         public static async void StartPeerConnection(string base64Offer)
         {
 
@@ -52,6 +57,10 @@ namespace ControlSync.Client
             Manager.ShowScreen();
         }
 
+        /// <summary>
+        /// Handles the offer from the remote peer.
+        /// </summary>
+        /// <param name="base64Offer">Offer in base 64</param>
         public static void HandleOffer(string base64Offer)
         {
             string remoteOffer = Encoding.UTF8.GetString(Convert.FromBase64String(base64Offer));
@@ -63,6 +72,10 @@ namespace ControlSync.Client
             ClientPg.Log("Received offer");
         }
 
+        /// <summary>
+        /// Adds an ICE candidate to the peer connection.
+        /// </summary>
+        /// <param name="base64ICECandidate">ICE candidate in base 64</param>
         public static void AddICECandidate(string base64ICECandidate)
         {
             if (peerConnection == null)
@@ -75,6 +88,9 @@ namespace ControlSync.Client
             peerConnection.addIceCandidate(iceCandidateInit);
         }
 
+        /// <summary>
+        /// Closes the peer connection.
+        /// </summary>
         public static void CloseConnection()
         {
             if (peerConnection == null) return;
@@ -86,6 +102,11 @@ namespace ControlSync.Client
             AudioEncoder.CloseAudioSink();
             AudioEncoder = null;
         }
+
+        /// <summary>
+        /// Creates a new peer connection.
+        /// </summary>
+        /// <returns>A new peer connection</returns>
         private static RTCPeerConnection CreatePeerConnection()
         {
             RTCConfiguration config = new RTCConfiguration

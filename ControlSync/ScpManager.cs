@@ -2,6 +2,9 @@
 
 namespace ControlSync
 {
+    /// <summary>
+    /// Manages the SCP bus for controllers.
+    /// </summary>
     public static class ScpManager
     {
         static ScpBus scpBus = new ScpBus();

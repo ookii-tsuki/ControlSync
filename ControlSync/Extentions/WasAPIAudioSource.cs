@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace SIPSorceryMedia.External
 {
+    /// <summary>
+    /// An audio source that captures audio from the default audio device.
+    /// </summary>
     public class WasAPIAudioSource : IAudioSource
     {
         private const int FRAME_DURATION_MS = 20;

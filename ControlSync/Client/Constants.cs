@@ -1,5 +1,8 @@
 ﻿namespace ControlSync.Client
 {
+    /// <summary>
+    /// Constants for the client.
+    /// </summary>
     class Constants
     {
         public const int TICKS_PER_SEC = 30; // How many ticks per second

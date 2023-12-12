@@ -3,6 +3,9 @@ using System.Net;
 
 namespace ControlSync.Client
 {
+    /// <summary>
+    /// Methods for handling packets from the server.
+    /// </summary>
     public class ClientHandle
     {
         public static void Welcome(Packet _packet)

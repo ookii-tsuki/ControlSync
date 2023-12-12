@@ -25,6 +25,10 @@ namespace ControlSync.Client
         private static RTCPeerConnection peerConnection;
 
         private static readonly string ffmpegPath = Path.Combine(Environment.CurrentDirectory, "FFMPEG");
+
+        /// <summary>
+        /// Starts the peer connection process.
+        /// </summary>
         public static async void StartPeerConnection()
         {
             Screenshare.Start();
@@ -48,6 +52,10 @@ namespace ControlSync.Client
 
         }
 
+        /// <summary>
+        /// Handles the answer from the remote peer.
+        /// </summary>
+        /// <param name="base64Answer">The answer in base 64</param>
         public static void HandleAnswer(string base64Answer)
         {
             string remoteAnswer = Encoding.UTF8.GetString(Convert.FromBase64String(base64Answer));
@@ -59,6 +67,10 @@ namespace ControlSync.Client
             ClientPg.Log("Received Answer");
         }
 
+        /// <summary>
+        /// Adds an ICE candidate to the peer connection.
+        /// </summary>
+        /// <param name="base64ICECandidate">The ICE candidate in base 64</param>
         public static void AddICECandidate(string base64ICECandidate)
         {
             if (peerConnection == null)
@@ -70,6 +82,10 @@ namespace ControlSync.Client
 
             peerConnection.addIceCandidate(iceCandidateInit);
         }
+
+        /// <summary>
+        /// Closes the peer connection.
+        /// </summary>
         public static void CloseConnection()
         {
             if (peerConnection == null)
@@ -85,10 +101,16 @@ namespace ControlSync.Client
 
             ClientSend.ClosePeerConnection();
         }
+
+        /// <summary>
+        /// Creates a new peer connection.
+        /// </summary>
+        /// <returns>A new peer connection</returns>
         private static RTCPeerConnection CreatePeerConnection()
         {
             RTCConfiguration config = new RTCConfiguration
             {
+                // Set ICE servers.
                 iceServers = new List<RTCIceServer> { new RTCIceServer { urls = STUN_URL1 }, new RTCIceServer { urls = STUN_URL2 } }
             };
             // Create a new peer connection.

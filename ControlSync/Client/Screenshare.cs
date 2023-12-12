@@ -32,6 +32,10 @@ namespace ControlSync.Client
         static OutputDuplication duplicatedOutput;
 
         static Thread screenshareThread;
+
+        /// <summary>
+        /// Initializes the screen capture and encoding components.
+        /// </summary>
         public static void Start()
         {
             if (!Client.isHost)
@@ -62,6 +66,9 @@ namespace ControlSync.Client
             screenshareThread.Start();
         }
 
+        /// <summary>
+        /// Closes the screen capture and encoding components.
+        /// </summary>
         public static void Close()
         {
             closed = true;
@@ -73,6 +80,9 @@ namespace ControlSync.Client
             duplicatedOutput.Dispose();
         }
 
+        /// <summary>
+        /// This method is called on a separate thread to capture the screen and send it to the remote peer.
+        /// </summary>
         private static void SendScreenBuffer()
         {
             while (!closed)

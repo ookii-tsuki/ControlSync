@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace ControlSync
 {
+    /// <summary>
+    /// Manages the controller mapping profiles.
+    /// </summary>
     public static class ProfileManager
     {
         static readonly string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
