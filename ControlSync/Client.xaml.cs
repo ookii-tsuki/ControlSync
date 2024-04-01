@@ -1,5 +1,8 @@
 ﻿using ControlSync.Client;
+using SIPSorceryMedia.FFmpeg;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -21,6 +24,7 @@ namespace ControlSync
         public ClientPg()
         {
             InitializeComponent();
+
             if (instance != null)
             {
                 portTB.Text = instance.portTB.Text;

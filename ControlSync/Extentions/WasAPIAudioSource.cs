@@ -91,27 +91,30 @@ namespace SIPSorceryMedia.External
         {
             while (!_isClosed)
             {
-                if (audioStream.Count >= FRAME_SIZE)
+                try
                 {
-                    byte[] pcm = new byte[FRAME_SIZE];
-                    audioStream.CopyTo(0, pcm, 0, FRAME_SIZE);
-                    audioStream.RemoveRange(0, FRAME_SIZE);
-
-                    short[] shortPcm = pcm.Take(pcm.Length * 2).Where((x, i) => i % 2 == 0).Select((y, i) => BitConverter.ToInt16(pcm, i * 2)).ToArray();
-
-                    OnAudioSourceRawSample?.Invoke(AudioSamplingRatesEnum.Rate16KHz, (uint)shortPcm.Length, shortPcm);
-
-                    if (OnAudioSourceEncodedSample != null)
+                    if (audioStream.Count >= FRAME_SIZE)
                     {
-                        var encodedSample = _audioEncoder.EncodeAudio(shortPcm, _audioFormatManager.SelectedFormat);
-                        if (encodedSample.Length > 0)
-                            OnAudioSourceEncodedSample?.Invoke((uint)(shortPcm.Length * _audioFormatManager.SelectedFormat.RtpClockRate / _audioFormatManager.SelectedFormat.ClockRate), encodedSample);
+                        byte[] pcm = new byte[FRAME_SIZE];
+                        audioStream.CopyTo(0, pcm, 0, FRAME_SIZE);
+                        audioStream.RemoveRange(0, FRAME_SIZE);
+
+                        short[] shortPcm = pcm.Take(pcm.Length * 2).Where((x, i) => i % 2 == 0).Select((y, i) => BitConverter.ToInt16(pcm, i * 2)).ToArray();
+
+                        OnAudioSourceRawSample?.Invoke(AudioSamplingRatesEnum.Rate16KHz, (uint)shortPcm.Length, shortPcm);
+
+                        if (OnAudioSourceEncodedSample != null)
+                        {
+                            var encodedSample = _audioEncoder.EncodeAudio(shortPcm, _audioFormatManager.SelectedFormat);
+                            if (encodedSample.Length > 0)
+                                OnAudioSourceEncodedSample?.Invoke((uint)(shortPcm.Length * _audioFormatManager.SelectedFormat.RtpClockRate / _audioFormatManager.SelectedFormat.ClockRate), encodedSample);
+                        }
+
                     }
-
+                    if (audioStream.Count >= MAX_AUDIO_BUFFER) // to prevent overflowing
+                        audioStream.Clear();
                 }
-                if (audioStream.Count >= MAX_AUDIO_BUFFER) // to prevent overflowing
-                    audioStream.Clear();
-
+                catch { }
                 Thread.Sleep(5);
             }
         }

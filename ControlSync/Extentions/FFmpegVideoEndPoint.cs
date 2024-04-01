@@ -3,7 +3,9 @@ using Microsoft.Extensions.Logging;
 using SIPSorceryMedia.Abstractions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SIPSorceryMedia.FFmpeg
@@ -11,7 +13,7 @@ namespace SIPSorceryMedia.FFmpeg
 
     // I had to rewrite class because the `ExternalVideoSourceRawSample` method
     // was commented out for some reason but i didn't get any problems with it so far
-    public class FFmpegVideoEndPoint1 : IVideoSink, IDisposable
+    public class FFmpegVideoEndPoint1 : IVideoSink, IVideoSource, IDisposable
     {
         public ILogger logger = SIPSorcery.LogFactory.CreateLogger<FFmpegVideoEndPoint1>();
 
@@ -21,7 +23,7 @@ namespace SIPSorceryMedia.FFmpeg
                 new VideoFormat(VideoCodecsEnum.H264, 100)
             };
 
-        private FFmpegVideoEncoder _ffmpegEncoder;
+        private FFmpegVideoEncoder1 _ffmpegEncoder;
 
         private MediaFormatManager<VideoFormat> _videoFormatManager;
         private bool _isStarted;
@@ -35,6 +37,9 @@ namespace SIPSorceryMedia.FFmpeg
 
         public event VideoSinkSampleDecodedFasterDelegate? OnVideoSinkDecodedSampleFaster;
         public event EncodedSampleDelegate OnVideoSourceEncodedSample;
+        public event RawVideoSampleDelegate OnVideoSourceRawSample;
+        public event RawVideoSampleFasterDelegate OnVideoSourceRawSampleFaster;
+        public event SourceErrorDelegate OnVideoSourceError;
 
 #pragma warning disable CS0067
         //public event EncodedSampleDelegate? OnVideoSourceEncodedSample;
@@ -46,7 +51,19 @@ namespace SIPSorceryMedia.FFmpeg
         public FFmpegVideoEndPoint1(Dictionary<string, string>? encoderOptions = null)
         {
             _videoFormatManager = new MediaFormatManager<VideoFormat>(_supportedFormats);
-            _ffmpegEncoder = new FFmpegVideoEncoder(encoderOptions);
+
+            _ffmpegEncoder = new FFmpegVideoEncoder1(encoderOptions, GetAvailableHW());
+            _ffmpegEncoder.SetThreadCount(4);
+        }
+
+        private AVHWDeviceType GetAvailableHW()
+        {
+            var type = AVHWDeviceType.AV_HWDEVICE_TYPE_NONE;
+            while ((type = ffmpeg.av_hwdevice_iterate_types(type)) != AVHWDeviceType.AV_HWDEVICE_TYPE_NONE)
+            {
+                return type;
+            }
+            return AVHWDeviceType.AV_HWDEVICE_TYPE_NONE;
         }
 
         public MediaEndPoints ToMediaEndPoints()
@@ -132,34 +149,37 @@ namespace SIPSorceryMedia.FFmpeg
             {
                 if (OnVideoSourceEncodedSample != null)
                 {
-                    uint fps = (durationMilliseconds > 0) ? 1000 / durationMilliseconds : Helper.DEFAULT_VIDEO_FRAME_RATE;
-                    if (fps == 0)
-                    {
-                        fps = 1;
-                    }
-                    unsafe
-                    {
-                        int stride = (pixelFormat == VideoPixelFormatsEnum.Bgra) ? 4 * width : 3 * width;
-                        var i420Buffer = PixelConverter.ToI420(width, height, stride, sample, pixelFormat);
-                        fixed (byte* i420BufferPtr = i420Buffer)
+
+                        uint fps = (durationMilliseconds > 0) ? 1000 / durationMilliseconds : Helper.DEFAULT_VIDEO_FRAME_RATE;
+                        if (fps == 0)
                         {
-                            byte[]? encodedBuffer = _ffmpegEncoder.Encode(GetAVCodecID(_videoFormatManager.SelectedFormat.Codec), i420BufferPtr, width, height, (int)fps, _forceKeyFrame);
-
-                            if (encodedBuffer != null)
+                            fps = 1;
+                        }
+                        unsafe
+                        {
+                            int stride = (pixelFormat == VideoPixelFormatsEnum.Bgra) ? 4 * width : 3 * width;
+                            var i420Buffer = PixelConverter.ToI420(width, height, stride, sample, pixelFormat);
+                            fixed (byte* i420BufferPtr = i420Buffer)
                             {
-                                //Console.WriteLine($"encoded buffer: {encodedBuffer.HexStr()}");
-                                uint durationRtpTS = 90000 / fps;
+                                byte[]? encodedBuffer = _ffmpegEncoder.Encode(GetAVCodecID(_videoFormatManager.SelectedFormat.Codec), i420BufferPtr, width, height, (int)fps, _forceKeyFrame);
 
-                                // Note the event handler can be removed while the encoding is in progress.
-                                OnVideoSourceEncodedSample?.Invoke(durationRtpTS, encodedBuffer);
+                                if (encodedBuffer != null)
+                                {
+                                    //Console.WriteLine($"encoded buffer: {encodedBuffer.HexStr()}");
+                                    uint durationRtpTS = 90000 / fps;
+
+                                    // Note the event handler can be removed while the encoding is in progress.
+                                    OnVideoSourceEncodedSample?.Invoke(durationRtpTS, encodedBuffer);
+                                }
+
                             }
                         }
-                    }
 
-                    if (_forceKeyFrame)
-                    {
-                        _forceKeyFrame = false;
-                    }
+                        if (_forceKeyFrame)
+                        {
+                            _forceKeyFrame = false;
+                        }
+
                 }
 
 
@@ -205,6 +225,11 @@ namespace SIPSorceryMedia.FFmpeg
         public Task CloseVideoSink()
         {
             return Task.CompletedTask;
+        }
+
+        public void ExternalVideoSourceRawSampleFaster(uint durationMilliseconds, RawImage rawImage)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SIPSorcery.Net;
 using SIPSorceryMedia.Abstractions;
 using SIPSorceryMedia.FFmpeg;
@@ -21,7 +22,7 @@ namespace ControlSync.Client
         public static RTCPeerConnectionState ConnectionState => peerConnection != null ? peerConnection.connectionState : RTCPeerConnectionState.disconnected;
 
         private static RTCPeerConnection peerConnection;
-        private static FFmpegVideoEndPoint VideoEncoder { get; set; }
+        private static FFmpegVideoEndPoint1 VideoEncoder { get; set; }
         private static SDL2AudioEndPoint1 AudioEncoder { get; set; }
 
         private static readonly string ffmpegPath = Path.Combine(Environment.CurrentDirectory, "FFMPEG");
@@ -32,10 +33,15 @@ namespace ControlSync.Client
         /// <param name="base64Offer">Offer in base 64</param>
         public static async void StartPeerConnection(string base64Offer)
         {
+            // Use Microsoft.Extensions.Logging package
+            ILoggerFactory logfactory = LoggerFactory.Create(config => {
+                // Use Microsoft.Extensions.Logging.Console package
+                config.AddSimpleConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+            });
 
-            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_DEBUG, ffmpegPath);
+            FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_DEBUG, ffmpegPath, logfactory.CreateLogger("FFMPEG Log"));
 
-            VideoEncoder = new FFmpegVideoEndPoint();
+            VideoEncoder = new FFmpegVideoEndPoint1();
 
             SDL2Helper.InitSDL();
             var playbackDevice = SDL2Helper.GetAudioPlaybackDevices()[0];

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using FFmpeg.AutoGen;
+using Newtonsoft.Json;
 using SIPSorcery.Net;
 using SIPSorceryMedia.Abstractions;
 using SIPSorceryMedia.External;
@@ -33,11 +34,12 @@ namespace ControlSync.Client
         {
             Screenshare.Start();
 
-            VideoEncoder = new FFmpegVideoEndPoint1();
 
             AudioEncoder = new WasAPIAudioSource(new OpusAudioEncoder());
 
             FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_DEBUG, ffmpegPath);
+
+            VideoEncoder = new FFmpegVideoEndPoint1();
 
             peerConnection = CreatePeerConnection();
 
