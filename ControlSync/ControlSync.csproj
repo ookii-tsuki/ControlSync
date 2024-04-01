@@ -52,6 +52,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Server\Server.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="OpenH264.NET">
       <HintPath>OpenH264.NET.dll</HintPath>
     </Reference>
