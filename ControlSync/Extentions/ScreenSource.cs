@@ -1,26 +1,56 @@
-﻿using SharpDX;
+﻿using ControlSync;
+using ControlSync.Client;
+using FFmpeg.AutoGen;
+using Microsoft.Extensions.Logging;
+using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using SharpDX.Mathematics.Interop;
 using SIPSorceryMedia.Abstractions;
+using SIPSorceryMedia.FFmpeg;
 using System;
-using System.Diagnostics;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using static SharpDX.Utilities;
-using System.Windows.Media.Media3D;
 using D2D = SharpDX.Direct2D1;
 using Device = SharpDX.Direct3D11.Device;
 using Factory1 = SharpDX.DXGI.Factory1;
 
-namespace ControlSync.Client
+namespace SIPSorceryMedia.DirectX
 {
-    public static class Screenshare
+
+    // I had to rewrite class because the `ExternalVideoSourceRawSample` method
+    // was commented out for some reason but i didn't get any problems with it so far
+    public class ScreenSource : IVideoSource, IDisposable
     {
+        public ILogger logger = SIPSorcery.LogFactory.CreateLogger<ScreenSource>();
+
+        public static readonly List<VideoFormat> _supportedFormats = new List<VideoFormat>
+            {
+                new VideoFormat(VideoCodecsEnum.VP8, 96),
+                new VideoFormat(VideoCodecsEnum.H264, 100)
+            };
+
+        private FFmpegVideoEncoder1 _ffmpegEncoder;
+
+        private MediaFormatManager<VideoFormat> _videoFormatManager;
+        private bool _isStarted;
+        private bool _isPaused;
+        private bool _isClosed;
+        private bool _forceKeyFrame;
+
+
+#pragma warning disable CS0067
+        public event VideoSinkSampleDecodedDelegate? OnVideoSinkDecodedSample;
+#pragma warning restore CS0067
+
+        public event VideoSinkSampleDecodedFasterDelegate? OnVideoSinkDecodedSampleFaster;
+        public event EncodedSampleDelegate OnVideoSourceEncodedSample;
+        public event RawVideoSampleDelegate OnVideoSourceRawSample;
+        public event RawVideoSampleFasterDelegate OnVideoSourceRawSampleFaster;
+        public event SourceErrorDelegate OnVideoSourceError;
+
         public static bool downscale = true;
         // # of graphics card adapter
         const int numAdapter = 0;
@@ -28,27 +58,73 @@ namespace ControlSync.Client
         // # of output device (i.e. monitor)
         const int numOutput = 0;
 
-        static bool closed = false;
-        static Factory1 factory;
-        static D2D.Factory1 d2dFactory;
-        static Adapter1 adapter;
-        static Device device;
-        static SharpDX.DXGI.Device dxgiDevice;
-        static D2D.Device d2dDevice;
-        static D2D.DeviceContext frameDc;
-        static Output output;
-        static Output1 output1;
-        static int streamWidth;
-        static int streamHeight;
-        static OutputDuplication duplicatedOutput;
-        static Texture2D screenTexture;
+        private Factory1 factory;
+        private D2D.Factory1 d2dFactory;
+        private Adapter1 adapter;
+        private Device device;
+        private SharpDX.DXGI.Device dxgiDevice;
+        private D2D.Device d2dDevice;
+        private D2D.DeviceContext frameDc;
+        private Output output;
+        private Output1 output1;
+        private int streamWidth;
+        private int streamHeight;
+        private OutputDuplication duplicatedOutput;
+        private Texture2D screenTexture;
 
-        static Thread screenshareThread;
-        /// <summary>
-        /// Initializes the screen capture and encoding components.
-        /// </summary>
-        public static void Start()
+        private Thread screenshareThread;
+
+#pragma warning disable CS0067
+        //public event EncodedSampleDelegate? OnVideoSourceEncodedSample;
+        //public event RawExtVideoSampleDelegate? OnVideoSourceRawExtSample;
+        //public event RawVideoSampleDelegate? OnVideoSourceRawSample;
+        //public event SourceErrorDelegate? OnVideoSourceError;
+#pragma warning restore CS0067
+
+        public ScreenSource(Dictionary<string, string>? encoderOptions = null)
         {
+            _videoFormatManager = new MediaFormatManager<VideoFormat>(_supportedFormats);
+
+            _ffmpegEncoder = new FFmpegVideoEncoder1(encoderOptions, GetAvailableHW());
+            _ffmpegEncoder.SetThreadCount(1);
+
+            downscale = false;
+        }
+
+        public ScreenSource(int width, int height, Dictionary<string, string>? encoderOptions = null)
+        {
+            _videoFormatManager = new MediaFormatManager<VideoFormat>(_supportedFormats);
+
+            _ffmpegEncoder = new FFmpegVideoEncoder1(encoderOptions, GetAvailableHW());
+            _ffmpegEncoder.SetThreadCount(1);
+
+            downscale = true;
+
+            streamWidth = width;
+            streamHeight = height;
+        }
+
+        private AVHWDeviceType GetAvailableHW()
+        {
+            var type = AVHWDeviceType.AV_HWDEVICE_TYPE_NONE;
+            while ((type = ffmpeg.av_hwdevice_iterate_types(type)) != AVHWDeviceType.AV_HWDEVICE_TYPE_NONE)
+            {
+                return type;
+            }
+            return AVHWDeviceType.AV_HWDEVICE_TYPE_NONE;
+        }
+
+
+        public void RestrictFormats(Func<VideoFormat, bool> filter) => _videoFormatManager.RestrictFormats(filter);
+        public List<VideoFormat> GetVideoSourceFormats() => _videoFormatManager.GetSourceFormats();
+        public void SetVideoSourceFormat(VideoFormat videoFormat) => _videoFormatManager.SetSelectedFormat(videoFormat);
+        public void ForceKeyFrame() => _forceKeyFrame = true;
+        public bool HasEncodedVideoSubscribers() => OnVideoSinkDecodedSampleFaster != null;
+        public bool IsVideoSourcePaused() => _isPaused;
+
+        private void Init()
+        {
+
             if (!Client.isHost)
                 return;
 
@@ -62,10 +138,6 @@ namespace ControlSync.Client
             // Get DXGI.Output
             output = adapter.GetOutput(numOutput);
             output1 = output.QueryInterface<Output1>();
-
-
-            streamWidth = 1280;
-            streamHeight = 720;
 
             // Duplicate the output
             duplicatedOutput = output1.DuplicateOutput(device);
@@ -105,7 +177,6 @@ namespace ControlSync.Client
 
             screenshareThread = new Thread(SendScreenBuffer);
 
-            closed = false;
 
             screenshareThread.Start();
         }
@@ -113,29 +184,24 @@ namespace ControlSync.Client
         /// <summary>
         /// Closes the screen capture and encoding components.
         /// </summary>
-        public static void Close()
+        public void Close()
         {
-            closed = true;
-            factory.Dispose();
-            adapter.Dispose();
-            device.Dispose();
-            output.Dispose();
-            output1.Dispose();
-            duplicatedOutput.Dispose();
+            factory?.Dispose();
+            adapter?.Dispose();
+            device?.Dispose();
+            output?.Dispose();
+            output1?.Dispose();
+            duplicatedOutput?.Dispose();
         }
+
         /// <summary>
         /// This method is called on a separate thread to capture the screen and send it to the remote peer.
         /// </summary>
-        private static void SendScreenBuffer()
+        private void SendScreenBuffer()
         {
-            while (!closed)
+            while (!_isClosed)
             {
 
-                if (HostPeer.VideoEncoder == null)
-                {
-                    Thread.Sleep(1000);
-                    continue;
-                }
                 byte[] rgbBuffer = GetScreenShot();
 
                 if (rgbBuffer == null) continue;
@@ -143,7 +209,7 @@ namespace ControlSync.Client
 
                 try
                 {
-                    HostPeer.VideoEncoder?.ExternalVideoSourceRawSample(16, streamWidth, streamHeight, rgbBuffer, VideoPixelFormatsEnum.Rgb);
+                    ExternalVideoSourceRawSample(16, streamWidth, streamHeight, rgbBuffer, VideoPixelFormatsEnum.Rgb);
                 }
                 catch { }
 
@@ -151,8 +217,7 @@ namespace ControlSync.Client
             }
         }
 
-
-        private static byte[] GetScreenShot()
+        private byte[] GetScreenShot()
         {
 
             try
@@ -178,7 +243,7 @@ namespace ControlSync.Client
 
 
                 try
-                {                    
+                {
                     screenResource.Dispose();
                     duplicatedOutput.ReleaseFrame();
                 }
@@ -201,7 +266,7 @@ namespace ControlSync.Client
             return null;
         }
 
-        private static byte[] ToByteArrayNoDownscale(SharpDX.DXGI.Resource screenResource)
+        private byte[] ToByteArrayNoDownscale(SharpDX.DXGI.Resource screenResource)
         {
             // copy resource into memory that can be accessed by the CPU
             using (var screenTexture2D = screenResource.QueryInterface<Texture2D>())
@@ -240,7 +305,7 @@ namespace ControlSync.Client
             return rgbBuffer;
         }
 
-        private static byte[] ToByteArrayAndDownscale(SharpDX.DXGI.Resource screenResource)
+        private byte[] ToByteArrayAndDownscale(SharpDX.DXGI.Resource screenResource)
         {
             using var frameSurface = screenResource.QueryInterface<Surface>();
             using var frameBitmap = new D2D.Bitmap1(frameDc, frameSurface);
@@ -344,6 +409,131 @@ namespace ControlSync.Client
             return rgbBuffer;
         }
 
-    }
 
+
+
+        public Task PauseVideo()
+        {
+            _isPaused = true;
+            return Task.CompletedTask;
+        }
+
+        public Task ResumeVideo()
+        {
+            _isPaused = false;
+            return Task.CompletedTask;
+        }
+
+        public Task StartVideo()
+        {
+            if (!_isStarted)
+            {
+                _isStarted = true;
+                Init();
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task CloseVideo()
+        {
+            if (!_isClosed)
+            {
+                _isClosed = true;
+                _ffmpegEncoder?.Dispose();
+                Close();
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public void ExternalVideoSourceRawSample(uint durationMilliseconds, int width, int height, byte[] sample, VideoPixelFormatsEnum pixelFormat)
+        {
+            if (!_isClosed)
+            {
+                if (OnVideoSourceEncodedSample != null)
+                {
+
+                    uint fps = (durationMilliseconds > 0) ? 1000 / durationMilliseconds : Helper.DEFAULT_VIDEO_FRAME_RATE;
+                    if (fps == 0)
+                    {
+                        fps = 1;
+                    }
+                    unsafe
+                    {
+                        int stride = (pixelFormat == VideoPixelFormatsEnum.Bgra) ? 4 * width : 3 * width;
+                        var i420Buffer = PixelConverter.ToI420(width, height, stride, sample, pixelFormat);
+                        fixed (byte* i420BufferPtr = i420Buffer)
+                        {
+                            byte[]? encodedBuffer = _ffmpegEncoder.Encode(GetAVCodecID(_videoFormatManager.SelectedFormat.Codec), i420BufferPtr, width, height, (int)fps, _forceKeyFrame);
+
+                            if (encodedBuffer != null)
+                            {
+                                //Console.WriteLine($"encoded buffer: {encodedBuffer.HexStr()}");
+                                uint durationRtpTS = 90000 / fps;
+
+                                // Note the event handler can be removed while the encoding is in progress.
+                                OnVideoSourceEncodedSample?.Invoke(durationRtpTS, encodedBuffer);
+                            }
+
+                        }
+                    }
+
+                    if (_forceKeyFrame)
+                    {
+                        _forceKeyFrame = false;
+                    }
+
+                }
+
+
+            }
+        }
+
+        public static AVCodecID GetAVCodecID(VideoCodecsEnum videoCodec)
+        {
+            AVCodecID result = AVCodecID.AV_CODEC_ID_H264;
+            switch (videoCodec)
+            {
+                case VideoCodecsEnum.VP8:
+                    result = AVCodecID.AV_CODEC_ID_VP8;
+                    break;
+                case VideoCodecsEnum.H264:
+                    result = AVCodecID.AV_CODEC_ID_H264;
+                    break;
+            }
+
+            return result;
+        }
+
+        public void Dispose()
+        {
+
+            CloseVideo();
+        }
+
+        public Task PauseVideoSink()
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task ResumeVideoSink()
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task StartVideoSink()
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task CloseVideoSink()
+        {
+            return Task.CompletedTask;
+        }
+
+        public void ExternalVideoSourceRawSampleFaster(uint durationMilliseconds, RawImage rawImage)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

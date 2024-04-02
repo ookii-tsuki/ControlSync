@@ -12,6 +12,7 @@ namespace ControlSync
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static MainWindow Instance { get; private set; }
         public MainWindow()
         {
             InitializeComponent();
@@ -25,6 +26,7 @@ namespace ControlSync
             Client.Client.onFailConnect += () => Dispatcher.Invoke(() => mappingPage.IsEnabled = true);
 
             new Mapping(); // to initialize the mapping
+            Instance = this;
         }
         private static void MainThread()
         {

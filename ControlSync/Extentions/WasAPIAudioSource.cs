@@ -5,6 +5,7 @@ using NAudio.Wave.SampleProviders;
 using SIPSorceryMedia.Abstractions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -96,7 +97,9 @@ namespace SIPSorceryMedia.External
                     if (audioStream.Count >= FRAME_SIZE)
                     {
                         byte[] pcm = new byte[FRAME_SIZE];
-                        audioStream.CopyTo(0, pcm, 0, FRAME_SIZE);
+
+                        Parallel.For(0, FRAME_SIZE, (i) => pcm[i] = audioStream[i]);
+
                         audioStream.RemoveRange(0, FRAME_SIZE);
 
                         short[] shortPcm = pcm.Take(pcm.Length * 2).Where((x, i) => i % 2 == 0).Select((y, i) => BitConverter.ToInt16(pcm, i * 2)).ToArray();

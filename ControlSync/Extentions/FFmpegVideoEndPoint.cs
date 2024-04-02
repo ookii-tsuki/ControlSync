@@ -53,7 +53,7 @@ namespace SIPSorceryMedia.FFmpeg
             _videoFormatManager = new MediaFormatManager<VideoFormat>(_supportedFormats);
 
             _ffmpegEncoder = new FFmpegVideoEncoder1(encoderOptions, GetAvailableHW());
-            _ffmpegEncoder.SetThreadCount(4);
+            _ffmpegEncoder.SetThreadCount(1);
         }
 
         private AVHWDeviceType GetAvailableHW()

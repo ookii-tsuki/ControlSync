@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using SIPSorcery.Net;
 using SIPSorceryMedia.Abstractions;
+using SIPSorceryMedia.DirectX;
 using SIPSorceryMedia.External;
 using SIPSorceryMedia.FFmpeg;
 using SIPSorceryMedia.OpusCodec;
@@ -20,7 +21,7 @@ namespace ControlSync.Client
 
         public static RTCPeerConnectionState ConnectionState => peerConnection != null ? peerConnection.connectionState : RTCPeerConnectionState.disconnected;
 
-        public static FFmpegVideoEndPoint1 VideoEncoder { get; private set; }
+        public static ScreenSource VideoSource { get; private set; }
         public static WasAPIAudioSource AudioEncoder { get; private set; }
 
         private static RTCPeerConnection peerConnection;
@@ -32,14 +33,13 @@ namespace ControlSync.Client
         /// </summary>
         public static async void StartPeerConnection()
         {
-            Screenshare.Start();
-
-
             AudioEncoder = new WasAPIAudioSource(new OpusAudioEncoder());
 
             FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_DEBUG, ffmpegPath);
 
-            VideoEncoder = new FFmpegVideoEndPoint1();
+            VideoSource = new ScreenSource(1280, 720);
+
+            await VideoSource.StartVideo();
 
             peerConnection = CreatePeerConnection();
 
@@ -95,11 +95,10 @@ namespace ControlSync.Client
 
             peerConnection.close();
             peerConnection = null;
-            VideoEncoder.Dispose();
-            VideoEncoder = null;
+            VideoSource.Dispose();
+            VideoSource = null;
             AudioEncoder.CloseAudio();
             AudioEncoder = null;
-            Screenshare.Close();
 
             ClientSend.ClosePeerConnection();
         }
@@ -119,18 +118,18 @@ namespace ControlSync.Client
             var pc = new RTCPeerConnection(config);
 
 
-            VideoEncoder.OnVideoSourceEncodedSample += pc.SendVideo;
+            VideoSource.OnVideoSourceEncodedSample += pc.SendVideo;
             AudioEncoder.OnAudioSourceEncodedSample += pc.SendAudio;
 
-            VideoEncoder.RestrictFormats(format => format.Codec == VideoCodecsEnum.H264);
+            VideoSource.RestrictFormats(format => format.Codec == VideoCodecsEnum.H264);
             AudioEncoder.RestrictFormats(format => format.Codec == AudioCodecsEnum.OPUS);
 
-            var videoTrack = new MediaStreamTrack(VideoEncoder.GetVideoSourceFormats(), MediaStreamStatusEnum.SendOnly);
+            var videoTrack = new MediaStreamTrack(VideoSource.GetVideoSourceFormats(), MediaStreamStatusEnum.SendOnly);
             var audioTrack = new MediaStreamTrack(AudioEncoder.GetAudioSourceFormats(), MediaStreamStatusEnum.SendOnly);
             pc.addTrack(videoTrack);
             pc.addTrack(audioTrack);
 
-            pc.OnVideoFormatsNegotiated += (sdpFormat) => VideoEncoder.SetVideoSourceFormat(sdpFormat.First());
+            pc.OnVideoFormatsNegotiated += (sdpFormat) => VideoSource.SetVideoSourceFormat(sdpFormat.First());
             pc.OnAudioFormatsNegotiated += (sdpFormat) => AudioEncoder.SetAudioSourceFormat(sdpFormat.First());
 
             // Add a handler for ICE candidate events.

@@ -173,7 +173,7 @@ namespace SIPSorceryMedia.FFmpeg
                 if (_bit_rate_tolerance != null) _encoderContext->bit_rate_tolerance = (int)_bit_rate_tolerance;
                 if (_rc_min_rate != null) _encoderContext->rc_min_rate = (long)_rc_min_rate;
                 if (_rc_max_rate != null) _encoderContext->rc_max_rate = (long)_rc_max_rate;
-                if (_thread_count != null) _encoderContext->thread_count = (int)_thread_count;
+                //if (_thread_count != null) _encoderContext->thread_count = (int)_thread_count;
 
                 // Set Key frame interval
                 if (fps < 5)
@@ -205,8 +205,27 @@ namespace SIPSorceryMedia.FFmpeg
                 {
                     ffmpeg.av_hwdevice_ctx_create(&_encoderContext->hw_device_ctx, _HwDeviceType, null, null, 0).ThrowExceptionIfError();
                 }
+                AVDictionary* opts = null;
+                //ffmpeg.av_dict_set(&opts, "fflags", "nobuffer", 0);
+                ffmpeg.av_dict_set(&opts, "flags", "low_delay", 0);
+                ffmpeg.av_dict_set(&opts, "fflags", "nobuffer", 0);
+                ffmpeg.av_dict_set(&opts, "avioflags", "direct", 0);
+                ffmpeg.av_dict_set(&opts, "probesize", "32", 0);
+                ffmpeg.av_dict_set(&opts, "analyzeduration", "0", 0);
+                ffmpeg.av_dict_set(&opts, "sync", "ext", 0);
 
-                ffmpeg.avcodec_open2(_encoderContext, codec, null).ThrowExceptionIfError();
+                if (_thread_count != null)
+                {
+                    ffmpeg.av_dict_set(&opts, "threads", _thread_count.ToString(), 0);
+                    ffmpeg.av_dict_set(&opts, "thread_type", "slice", 0);
+                    ffmpeg.av_dict_set(&opts, "slices", "1", 0);
+                }
+
+                ffmpeg.avcodec_open2(_encoderContext, codec, &opts).ThrowExceptionIfError();
+
+                // Free the dictionary after use
+                ffmpeg.av_dict_free(&opts);
+
 
                 logger.LogDebug($"Successfully initialised ffmpeg based image encoder: CodecId:[{codecID}] - {width}:{height} - {fps} Fps");
             }
@@ -277,8 +296,24 @@ namespace SIPSorceryMedia.FFmpeg
                 {
                     ffmpeg.av_hwdevice_ctx_create(&_decoderContext->hw_device_ctx, _HwDeviceType, null, null, 0).ThrowExceptionIfError();
                 }
+                AVDictionary* opts = null;
 
-                ffmpeg.avcodec_open2(_decoderContext, codec, null).ThrowExceptionIfError();
+
+                ffmpeg.av_dict_set(&opts, "flags", "low_delay", 0);
+                ffmpeg.av_dict_set(&opts, "fflags", "nobuffer", 0);
+                ffmpeg.av_dict_set(&opts, "avioflags", "direct", 0);
+                ffmpeg.av_dict_set(&opts, "probesize", "32", 0);
+                ffmpeg.av_dict_set(&opts, "analyzeduration", "0", 0);
+                ffmpeg.av_dict_set(&opts, "sync", "ext", 0);
+
+                if (_thread_count != null)
+                {
+                    ffmpeg.av_dict_set(&opts, "threads", _thread_count.ToString(), 0);
+                    ffmpeg.av_dict_set(&opts, "thread_type", "slice", 0);
+                    ffmpeg.av_dict_set(&opts, "slices", _thread_count.ToString(), 0);
+                }
+
+                ffmpeg.avcodec_open2(_decoderContext, codec, &opts).ThrowExceptionIfError();
 
                 logger.LogDebug($"[InitialiseDecoder] CodecId:[{codecID}");
             }
