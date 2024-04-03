@@ -162,16 +162,16 @@ namespace ControlSync.Client
 
             };
 
-
+            string hostName = Manager.players[1].Username;
             // Add a handler for connection state change events.
             // This can be used to monitor the status of the WebRTC session.
             peerConnection.onconnectionstatechange += (state) =>
             {
-                ClientPg.Log($"Peer connection state with {Manager.players[1].Username} changed to {state}.");
+                ClientPg.Log($"Peer connection state with {hostName} changed to {state}.");
             };
 
             peerConnection.OnTimeout += (mediaType) => ClientPg.Log($"Timeout on media {mediaType}.");
-            peerConnection.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state with {Manager.players[1].Username} changed to {state}.");
+            peerConnection.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state with {hostName} changed to {state}.");
 
             return peerConnection;
         }

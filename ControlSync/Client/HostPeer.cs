@@ -45,6 +45,8 @@ namespace ControlSync.Client
 
         public static async void GenerateOffer(int toId)
         {
+            ClientPg.Log($"Generating offer for {Manager.players[toId].Username}");
+
             var peerConnection = CreatePeerConnection(toId);
 
             var offerSdp = peerConnection.createOffer(null);
@@ -104,6 +106,7 @@ namespace ControlSync.Client
             foreach (var peerConnection in peerConnections)
             {
                 peerConnection.Value.Close("Closing peer connection because the host disconnected");
+                peerConnection.Value.Dispose();
             }
             peerConnections.Clear();
 
@@ -151,21 +154,26 @@ namespace ControlSync.Client
                 var jCandidate = candidate.toJSON();
                 var base64ICECandidate = Convert.ToBase64String(Encoding.UTF8.GetBytes(jCandidate));
 
-                var player = Manager.players[myId];
-                ClientSend.ICECandidate(base64ICECandidate, player.Id);
+                ClientSend.ICECandidate(base64ICECandidate, myId);
 
             };
 
-
+            string remoteUsername = Manager.players[myId].Username;
             // Add a handler for connection state change events.
             // This can be used to monitor the status of the WebRTC session.
             pc.onconnectionstatechange += (state) =>
             {
-                ClientPg.Log($"Peer connection state with {Manager.players[myId].Username} changed to {state}.");
+                ClientPg.Log($"Peer connection state with {remoteUsername} changed to {state}.");
+
+                if (state == RTCPeerConnectionState.closed || state == RTCPeerConnectionState.disconnected)
+                {
+                    pc?.Dispose();
+                    peerConnections.Remove(myId);
+                }
             };
 
             pc.OnTimeout += (mediaType) => ClientPg.Log($"Timeout on media {mediaType}.");
-            pc.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state with {Manager.players[myId].Username} changed to {state}.");
+            pc.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state with {remoteUsername} changed to {state}.");
 
             return pc;
         }

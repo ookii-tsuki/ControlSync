@@ -98,7 +98,7 @@ namespace SIPSorceryMedia.External
                     {
                         byte[] pcm = new byte[FRAME_SIZE];
 
-                        Parallel.For(0, FRAME_SIZE, (i) => pcm[i] = audioStream[i]);
+                        audioStream.CopyTo(0, pcm, 0, FRAME_SIZE);
 
                         audioStream.RemoveRange(0, FRAME_SIZE);
 
