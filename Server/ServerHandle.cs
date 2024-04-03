@@ -18,10 +18,11 @@ namespace Server
 
             if (_fromClient != Client.HOST_ID)
             {
-                Player hostPlayer = Server.clients[Client.HOST_ID].player;
-
-                hostPlayer.SendAllICECandidates(_fromClient);
-                hostPlayer.SendOffer(_fromClient);
+                //Player hostPlayer = Server.clients[Client.HOST_ID].player;
+                //
+                //hostPlayer.SendAllICECandidates(_fromClient);
+                //hostPlayer.SendOffer(_fromClient);
+                ServerSend.GenerateOffer(_fromClient);
             }
         }
 
@@ -42,16 +43,12 @@ namespace Server
             if (!Server.clients.ContainsKey(_fromClient) || Server.clients[_fromClient].player == null)
                 return;
 
+            int toId = _packet.ReadInt();
             string base64Offer = _packet.ReadString();
-            Player player = Server.clients[_fromClient].player;
-            player.base64Offer = base64Offer;
-            for (int i = 1; i <= Server.clients.Count; i++)
-            {
-                if (i == _fromClient) continue;
-                if (!Server.clients.ContainsKey(i) || Server.clients[i].player == null) continue;
 
-                ServerSend.PeerOffer(player, i);
-            }
+            if (!Server.clients.ContainsKey(toId) || Server.clients[toId].player == null) return;
+
+            ServerSend.PeerOffer(base64Offer, toId);
         }
 
         public static void PeerAnswer(int _fromClient, Packet _packet)
@@ -59,8 +56,9 @@ namespace Server
             if (!Server.clients.ContainsKey(_fromClient) || Server.clients[_fromClient].player == null)
                 return;
 
+            int fromId = _packet.ReadInt();
             string base64Answer = _packet.ReadString();
-            Server.clients[_fromClient].player.SendAnswer(base64Answer);
+            ServerSend.PeerAnswer(base64Answer, fromId);
         }
 
         public static void ICECandidate(int _fromClient, Packet _packet)
@@ -70,10 +68,8 @@ namespace Server
 
             int toId = _packet.ReadInt();
             string base64ICECandidate = _packet.ReadString();
-            Player player = Server.clients[_fromClient].player;
 
-            player.iceCandidates.Add(base64ICECandidate);
-            player.SendICECandidate(base64ICECandidate, toId);
+            ServerSend.ICECandidate(base64ICECandidate, toId, _fromClient);
         }
 
         public static void ClosePeerConnection(int _fromClient, Packet _packet)

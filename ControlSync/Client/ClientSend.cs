@@ -49,20 +49,22 @@
             SendUDPData(_packet);
         }
 
-        public static void PeerOffer(string base64Offer)
+        public static void PeerOffer(string base64Offer, int toId)
         {
             using Packet _packet = new Packet((int)ClientPackets.PeerOffer);
 
+            _packet.Write(toId);
             _packet.Write(base64Offer);
 
             SendTCPData(_packet);
 
         }
 
-        public static void PeerAnswer(string base64Answer)
+        public static void PeerAnswer(string base64Answer, int fromId)
         {
             using Packet _packet = new Packet((int)ClientPackets.PeerAnswer);
 
+            _packet.Write(fromId);
             _packet.Write(base64Answer);
 
             SendTCPData(_packet);

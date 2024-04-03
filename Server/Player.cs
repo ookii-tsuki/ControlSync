@@ -9,8 +9,6 @@ namespace Server
 
         public int buttonState;
         public short[] analogInput = new short[6];
-        public string base64Offer;
-        public List<string> iceCandidates = new List<string>();
 
         public Player(int _id, string _username)
         {
@@ -27,26 +25,6 @@ namespace Server
             ServerSend.AnalogState(this);
         }
 
-        public void SendOffer(int toId)
-        {
-            ServerSend.PeerOffer(this, toId);
-        }
 
-        public void SendAnswer(string base64Answer)
-        {
-            ServerSend.PeerAnswer(base64Answer);
-        }
-
-        public void SendICECandidate(string base64ICECandidate, int toId)
-        {
-            ServerSend.ICECandidate(base64ICECandidate, toId);
-        }
-        public void SendAllICECandidates(int toId)
-        {
-            foreach (var iceCandidate in iceCandidates)
-            {
-                ServerSend.ICECandidate(iceCandidate, toId);
-            }
-        }
     }
 }

@@ -308,7 +308,8 @@ namespace ControlSync.Client
                 { (int)ServerPackets.PeerOffer, ClientHandle.PeerOffer},
                 { (int)ServerPackets.PeerAnswer, ClientHandle.PeerAnswer},
                 { (int)ServerPackets.ICECandidate, ClientHandle.ICECandidate},
-                { (int)ServerPackets.ClosePeerConnection, ClientHandle.ClosePeerConnection}
+                { (int)ServerPackets.ClosePeerConnection, ClientHandle.ClosePeerConnection },
+                { (int)ServerPackets.GenerateOffer, ClientHandle.GenerateOffer }
             };
         }
 

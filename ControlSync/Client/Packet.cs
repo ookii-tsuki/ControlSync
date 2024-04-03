@@ -15,7 +15,8 @@ namespace ControlSync.Client
         PeerOffer,
         PeerAnswer,
         ICECandidate,
-        ClosePeerConnection
+        ClosePeerConnection,
+        GenerateOffer
     }
 
     /// <summary>Sent from client to server.</summary>

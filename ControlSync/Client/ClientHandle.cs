@@ -78,17 +78,19 @@ namespace ControlSync.Client
             if (!Client.isHost) // this answer for the host who hosts the stream
                 return;
 
+            int fromId = _packet.ReadInt();
             string base64Answer = _packet.ReadString();
 
-            HostPeer.HandleAnswer(base64Answer);
+            HostPeer.HandleAnswer(base64Answer, fromId);
         }
 
         public static void ICECandidate(Packet _packet)
         {
+            int fromId = _packet.ReadInt();
             string base64ICECandidate = _packet.ReadString();
 
             if (Client.isHost)
-                HostPeer.AddICECandidate(base64ICECandidate);
+                HostPeer.AddICECandidate(base64ICECandidate, fromId);
             else
                 ClientPeer.AddICECandidate(base64ICECandidate);
         }
@@ -100,6 +102,14 @@ namespace ControlSync.Client
 
             ClientPeer.CloseConnection();
             Manager.CloseScreen();
+        }
+
+        public static void GenerateOffer(Packet _packet)
+        {
+            int _toId = _packet.ReadInt();
+
+            if (Client.isHost)
+                HostPeer.GenerateOffer(_toId);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace ControlSync.Client
         public static RTCPeerConnectionState ConnectionState => peerConnection != null ? peerConnection.connectionState : RTCPeerConnectionState.disconnected;
 
         private static RTCPeerConnection peerConnection;
-        private static FFmpegVideoEndPoint1 VideoEncoder { get; set; }
+        private static FFmpegVideoEndPoint1 VideoEndPoint { get; set; }
         private static SDL2AudioEndPoint1 AudioEncoder { get; set; }
 
         private static readonly string ffmpegPath = Path.Combine(Environment.CurrentDirectory, "FFMPEG");
@@ -41,7 +41,7 @@ namespace ControlSync.Client
 
             FFmpegInit.Initialise(FfmpegLogLevelEnum.AV_LOG_DEBUG, ffmpegPath, logfactory.CreateLogger("FFMPEG Log"));
 
-            VideoEncoder = new FFmpegVideoEndPoint1();
+            VideoEndPoint = new FFmpegVideoEndPoint1();
 
             SDL2Helper.InitSDL();
             var playbackDevice = SDL2Helper.GetAudioPlaybackDevices()[0];
@@ -58,7 +58,7 @@ namespace ControlSync.Client
                  new Newtonsoft.Json.Converters.StringEnumConverter());
             var answerBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(answerSerialised));
 
-            ClientSend.PeerAnswer(answerBase64);
+            ClientSend.PeerAnswer(answerBase64, Client.myId);
 
             Manager.ShowScreen();
         }
@@ -103,8 +103,8 @@ namespace ControlSync.Client
 
             peerConnection.close();
             peerConnection = null;
-            VideoEncoder.Dispose();
-            VideoEncoder = null;
+            VideoEndPoint.Dispose();
+            VideoEndPoint = null;
             AudioEncoder.CloseAudioSink();
             AudioEncoder = null;
         }
@@ -122,22 +122,22 @@ namespace ControlSync.Client
             // Create a new peer connection.
             var peerConnection = new RTCPeerConnection(config);
 
-            VideoEncoder.RestrictFormats(format => format.Codec == VideoCodecsEnum.H264);
+            VideoEndPoint.RestrictFormats(format => format.Codec == VideoCodecsEnum.H264);
             AudioEncoder.RestrictFormats(format => format.Codec == AudioCodecsEnum.OPUS);
 
-            var videoTrack = new MediaStreamTrack(VideoEncoder.GetVideoSourceFormats(), MediaStreamStatusEnum.RecvOnly);
+            var videoTrack = new MediaStreamTrack(VideoEndPoint.GetVideoSourceFormats(), MediaStreamStatusEnum.RecvOnly);
             var audioTrack = new MediaStreamTrack(AudioEncoder.GetAudioSinkFormats(), MediaStreamStatusEnum.RecvOnly);
 
             peerConnection.addTrack(videoTrack);
             peerConnection.addTrack(audioTrack);
 
-            peerConnection.OnVideoFormatsNegotiated += (sdpFormat) => VideoEncoder.SetVideoSourceFormat(sdpFormat.First());
+            peerConnection.OnVideoFormatsNegotiated += (sdpFormat) => VideoEndPoint.SetVideoSourceFormat(sdpFormat.First());
             peerConnection.OnAudioFormatsNegotiated += (sdpFormat) => AudioEncoder.SetAudioSinkFormat(sdpFormat.First());
 
-            peerConnection.OnVideoFrameReceived += VideoEncoder.GotVideoFrame;
+            peerConnection.OnVideoFrameReceived += VideoEndPoint.GotVideoFrame;
 
 
-            VideoEncoder.OnVideoSinkDecodedSampleFaster += (RawImage img) =>
+            VideoEndPoint.OnVideoSinkDecodedSampleFaster += (RawImage img) =>
             {
                 Manager.UpdateScreenView(img.GetBuffer(), img.Width, img.Height, img.Stride);
             };
@@ -167,11 +167,11 @@ namespace ControlSync.Client
             // This can be used to monitor the status of the WebRTC session.
             peerConnection.onconnectionstatechange += (state) =>
             {
-                ClientPg.Log($"Peer connection state changed to {state}.");
+                ClientPg.Log($"Peer connection state with {Manager.players[1].Username} changed to {state}.");
             };
 
             peerConnection.OnTimeout += (mediaType) => ClientPg.Log($"Timeout on media {mediaType}.");
-            peerConnection.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state changed to {state}.");
+            peerConnection.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state with {Manager.players[1].Username} changed to {state}.");
 
             return peerConnection;
         }

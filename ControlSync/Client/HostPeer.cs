@@ -19,12 +19,11 @@ namespace ControlSync.Client
         private const string STUN_URL1 = "stun:stun.l.google.com:19302";
         private const string STUN_URL2 = "stun:stun1.l.google.com:19302";
 
-        public static RTCPeerConnectionState ConnectionState => peerConnection != null ? peerConnection.connectionState : RTCPeerConnectionState.disconnected;
 
         public static ScreenSource VideoSource { get; private set; }
         public static WasAPIAudioSource AudioEncoder { get; private set; }
 
-        private static RTCPeerConnection peerConnection;
+        private static Dictionary<int, RTCPeerConnection> peerConnections;
 
         private static readonly string ffmpegPath = Path.Combine(Environment.CurrentDirectory, "FFMPEG");
 
@@ -41,16 +40,24 @@ namespace ControlSync.Client
 
             await VideoSource.StartVideo();
 
-            peerConnection = CreatePeerConnection();
+            peerConnections = new Dictionary<int, RTCPeerConnection>();
+        }
+
+        public static async void GenerateOffer(int toId)
+        {
+            var peerConnection = CreatePeerConnection(toId);
 
             var offerSdp = peerConnection.createOffer(null);
+
             await peerConnection.setLocalDescription(offerSdp);
+
+            peerConnections.Add(toId, peerConnection);
 
             var offerSerialised = JsonConvert.SerializeObject(offerSdp,
                  new Newtonsoft.Json.Converters.StringEnumConverter());
             var offerBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(offerSerialised));
 
-            ClientSend.PeerOffer(offerBase64);
+            ClientSend.PeerOffer(offerBase64, toId);
 
         }
 
@@ -58,31 +65,35 @@ namespace ControlSync.Client
         /// Handles the answer from the remote peer.
         /// </summary>
         /// <param name="base64Answer">The answer in base 64</param>
-        public static void HandleAnswer(string base64Answer)
+        public static void HandleAnswer(string base64Answer, int fromId)
         {
+            if (!peerConnections.ContainsKey(fromId) || !Manager.players.ContainsKey(fromId))
+                return;
+
             string remoteAnswer = Encoding.UTF8.GetString(Convert.FromBase64String(base64Answer));
 
             RTCSessionDescriptionInit answerInit = JsonConvert.DeserializeObject<RTCSessionDescriptionInit>(remoteAnswer);
 
-            peerConnection.setRemoteDescription(answerInit);
+            peerConnections[fromId].setRemoteDescription(answerInit);
 
-            ClientPg.Log("Received Answer");
+            ClientPg.Log($"Received answer from {Manager.players[fromId].Username}");
         }
 
         /// <summary>
         /// Adds an ICE candidate to the peer connection.
         /// </summary>
         /// <param name="base64ICECandidate">The ICE candidate in base 64</param>
-        public static void AddICECandidate(string base64ICECandidate)
+        public static void AddICECandidate(string base64ICECandidate, int fromId)
         {
-            if (peerConnection == null)
+            if (!peerConnections.ContainsKey(fromId) || !Manager.players.ContainsKey(fromId))
                 return;
+
 
             string remoteICECandidate = Encoding.UTF8.GetString(Convert.FromBase64String(base64ICECandidate));
 
             RTCIceCandidateInit iceCandidateInit = JsonConvert.DeserializeObject<RTCIceCandidateInit>(remoteICECandidate);
 
-            peerConnection.addIceCandidate(iceCandidateInit);
+            peerConnections[fromId].addIceCandidate(iceCandidateInit);
         }
 
         /// <summary>
@@ -90,11 +101,12 @@ namespace ControlSync.Client
         /// </summary>
         public static void CloseConnection()
         {
-            if (peerConnection == null)
-                return;
+            foreach (var peerConnection in peerConnections)
+            {
+                peerConnection.Value.Close("Closing peer connection because the host disconnected");
+            }
+            peerConnections.Clear();
 
-            peerConnection.close();
-            peerConnection = null;
             VideoSource.Dispose();
             VideoSource = null;
             AudioEncoder.CloseAudio();
@@ -107,7 +119,7 @@ namespace ControlSync.Client
         /// Creates a new peer connection.
         /// </summary>
         /// <returns>A new peer connection</returns>
-        private static RTCPeerConnection CreatePeerConnection()
+        private static RTCPeerConnection CreatePeerConnection(int myId)
         {
             RTCConfiguration config = new RTCConfiguration
             {
@@ -139,11 +151,9 @@ namespace ControlSync.Client
                 var jCandidate = candidate.toJSON();
                 var base64ICECandidate = Convert.ToBase64String(Encoding.UTF8.GetBytes(jCandidate));
 
-                for (int i = 2; i <= Manager.players.Count; i++)
-                {
-                    var player = Manager.players[i];
-                    ClientSend.ICECandidate(base64ICECandidate, player.Id);
-                }
+                var player = Manager.players[myId];
+                ClientSend.ICECandidate(base64ICECandidate, player.Id);
+
             };
 
 
@@ -151,11 +161,11 @@ namespace ControlSync.Client
             // This can be used to monitor the status of the WebRTC session.
             pc.onconnectionstatechange += (state) =>
             {
-                ClientPg.Log($"Peer connection state changed to {state}.");
+                ClientPg.Log($"Peer connection state with {Manager.players[myId].Username} changed to {state}.");
             };
 
             pc.OnTimeout += (mediaType) => ClientPg.Log($"Timeout on media {mediaType}.");
-            pc.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state changed to {state}.");
+            pc.oniceconnectionstatechange += (state) => ClientPg.Log($"ICE connection state with {Manager.players[myId].Username} changed to {state}.");
 
             return pc;
         }
